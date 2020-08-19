@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SnapCall;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,9 +58,23 @@ public class PokerGameManager : MonoBehaviour
     public int turn = 0;
     public int gameCount = 1;
 
+    private Evaluator fiveCardEvaluator;
+
 
     void Start()
     {
+        //uncomment to generate new evaluator table
+        //Evaluator fiveCardEvaluator = new Evaluator(null, true, false, false, 1.25, true, false);
+        //fiveCardEvaluator.SaveToFile("./eval_tables/five_card.ser");
+        fiveCardEvaluator = new Evaluator(fileName: "./eval_tables/five_card.ser");
+
+        /*print(fiveCardEvaluator.Evaluate(0x00000001 | 0x00000002 | 0x00000004 | 0x00000008 | 0x00000010));
+        print(fiveCardEvaluator.Evaluate(0x1000000000000 | 0x0100000000000 | 0x0010000000000 | 0x0001000000000 | 0x0000100000000));
+        print(fiveCardEvaluator.Evaluate(0x00000001 | 0x00000010 | 0x00000100 | 0x00001000 | 0x00010000));
+        print(fiveCardEvaluator.Evaluate(0x10000000 | 0x20000000 | 0x40000000 | 0x80000000 | 0x01000000));
+
+        print(fiveCardEvaluator.Evaluate(0x0000000010000 | 0x0000000008000 | 0x0000000000400 | 0x0000200000000 | 0x0000000000001));*/
+
         if (instance == null)
         {
             instance = this;
@@ -71,9 +86,6 @@ public class PokerGameManager : MonoBehaviour
 
         playerUI.gameObject.SetActive(false);
 
-        //player = PlayerAgent.instance.gameObject;
-        //opponent = GameObject.FindObjectOfType<NPCController>().gameObject;
-        //opponent;
         animator = GetComponent<Animator>();
 
         canvas = GetComponentInChildren<Canvas>();
@@ -107,8 +119,8 @@ public class PokerGameManager : MonoBehaviour
         dealer.GetComponent<PokerPlayer>().responding = false;
         nonDealer.GetComponent<PokerPlayer>().responding = false;
 
-        player.GetComponentInChildren<ParticleSystem>().Play();
-        opponent.GetComponentInChildren<ParticleSystem>().Play();
+        //player.GetComponentInChildren<ParticleSystem>().Play();
+        //opponent.GetComponentInChildren<ParticleSystem>().Play();
     }
 
     public void NextGame(GameObject player, GameObject opponent)
@@ -559,6 +571,129 @@ public class PokerGameManager : MonoBehaviour
         player.SendMessage("Poke");
         opponent.SendMessage("Poke");
         LaunchTextbox("SHOWDOWN", 2);
+
+
+        opponentCards[0].GetComponent<Animator>().SetBool("revealed", true);
+        opponentCards[1].GetComponent<Animator>().SetBool("revealed", true);
+
+        // i don't know how to code combinations so i'm writing the worst code in the world instead
+        // calculate player's hand value (check every possible 5 card combo and pick best score)
+        uint t1 = tableCards[0].GetComponent<Card>().GetBit();
+        uint t2 = tableCards[1].GetComponent<Card>().GetBit();
+        uint t3 = tableCards[2].GetComponent<Card>().GetBit();
+        uint t4 = tableCards[3].GetComponent<Card>().GetBit();
+        uint t5 = tableCards[4].GetComponent<Card>().GetBit();
+
+        uint p1 = playerCards[0].GetComponent<Card>().GetBit();
+        uint p2 = playerCards[1].GetComponent<Card>().GetBit();
+
+        uint o1 = opponentCards[0].GetComponent<Card>().GetBit();
+        uint o2 = opponentCards[1].GetComponent<Card>().GetBit();
+
+        int playerScore = 0;
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate( t1 | t2 | t3 | t4 | t5 ));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p1 | t2 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p1 | p2 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p1 | t2 | p2 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p1 | t2 | t3 | p2 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p1 | t2 | t3 | t4 | p2));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p1 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p1 | p2 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p1 | t3 | p2 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p1 | t3 | t4 | p2));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p1 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p1 | p2 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p1 | t4 | p2));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | p1 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | p1 | p2));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | p1));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p2 | t2 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p2 | p1 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p2 | t2 | p1 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p2 | t2 | t3 | p1 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(p2 | t2 | t3 | t4 | p1));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p2 | t3 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p2 | p1 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p2 | t3 | p1 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | p2 | t3 | t4 | p1));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p2 | t4 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p2 | p1 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | p2 | t4 | p1));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | p2 | t5));
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | p2 | p1));
+
+        playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | p2));
+
+        print("player score: " + playerScore);
+
+
+
+        // calculate opponent's hand value
+        int opponentScore = 0;
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | t5));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o1 | o2 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o1 | t2 | o2 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | o2 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | t4 | o2));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o1 | o2 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | o2 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | t4 | o2));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | o2 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | t4 | o2));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | o2));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o1));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o2 | o1 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o2 | t2 | o1 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | o1 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | t4 | o1));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o2 | o1 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | o1 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | t4 | o1));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | t4 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | o1 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | t4 | o1));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o2 | t5));
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o2 | o1));
+
+        opponentScore = Mathf.Max(opponentScore, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o2));
+
+        print("opponent score: " + opponentScore);
+
+        if (playerScore > opponentScore)
+        {
+            print("player wins the pot");
+        } else if (playerScore == opponentScore)
+        {
+            print("draw: player splits the pot");
+        } else
+        {
+            print("opponent wins the pot");
+        }
+
     }
 
     void LaunchTextbox(string text, int mode)
