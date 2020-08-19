@@ -6,9 +6,9 @@ public class Card : MonoBehaviour
 {
     public string suit;
     public string val;
-    public uint bit;
+    public ulong bit;
     
-    public uint GetBit()
+    public ulong GetBit()
     {
         print("card evaluation please");
         switch (suit)
@@ -31,7 +31,7 @@ public class Card : MonoBehaviour
         switch (val)
         {
             case "2":
-                bit = bit << (4 * 0);
+                //bit = bit << (4 * 0);
                 break;
             case "3":
                 bit = bit << (4 * 1);

@@ -568,6 +568,7 @@ public class PokerGameManager : MonoBehaviour
 
     void Showdown()
     {
+        print("showdown");
         player.SendMessage("Poke");
         opponent.SendMessage("Poke");
         LaunchTextbox("SHOWDOWN", 2);
@@ -578,17 +579,29 @@ public class PokerGameManager : MonoBehaviour
 
         // i don't know how to code combinations so i'm writing the worst code in the world instead
         // calculate player's hand value (check every possible 5 card combo and pick best score)
-        uint t1 = tableCards[0].GetComponent<Card>().GetBit();
-        uint t2 = tableCards[1].GetComponent<Card>().GetBit();
-        uint t3 = tableCards[2].GetComponent<Card>().GetBit();
-        uint t4 = tableCards[3].GetComponent<Card>().GetBit();
-        uint t5 = tableCards[4].GetComponent<Card>().GetBit();
+        ulong t1 = tableCards[0].GetComponent<Card>().GetBit();
+        ulong t2 = tableCards[1].GetComponent<Card>().GetBit();
+        ulong t3 = tableCards[2].GetComponent<Card>().GetBit();
+        ulong t4 = tableCards[3].GetComponent<Card>().GetBit();
+        ulong t5 = tableCards[4].GetComponent<Card>().GetBit();
 
-        uint p1 = playerCards[0].GetComponent<Card>().GetBit();
-        uint p2 = playerCards[1].GetComponent<Card>().GetBit();
+        ulong p1 = playerCards[0].GetComponent<Card>().GetBit();
+        ulong p2 = playerCards[1].GetComponent<Card>().GetBit();
 
-        uint o1 = opponentCards[0].GetComponent<Card>().GetBit();
-        uint o2 = opponentCards[1].GetComponent<Card>().GetBit();
+        ulong o1 = opponentCards[0].GetComponent<Card>().GetBit();
+        ulong o2 = opponentCards[1].GetComponent<Card>().GetBit();
+
+        print(t1);
+        print(t2);
+        print(t3);
+        print(t4);
+        print(t5);
+
+        print(p1);
+        print(p2);
+
+        print(o1);
+        print(o2);
 
         int playerScore = 0;
         playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate( t1 | t2 | t3 | t4 | t5 ));
