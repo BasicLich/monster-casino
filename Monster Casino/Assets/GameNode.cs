@@ -7,6 +7,7 @@ public enum GameEventType
     Dialog,
     PlayPoker,
     SetVariable,
+    EmergencyDog,
 }
 public class GameNode : MonoBehaviour
 {

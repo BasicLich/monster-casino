@@ -55,7 +55,21 @@ public class GameManager : MonoBehaviour
             PokerGameManager.instance.StartGame(PlayerAgent.instance.gameObject, curr.pokerOpponent.gameObject);
         }
 
+        if (curr.nodeType == GameEventType.EmergencyDog)
+        {
+            GameObject windowInstance = GameObject.Instantiate(dialogWindow);
+            windowInstance.SendMessage("SetName", curr.nameText);
+            windowInstance.SendMessage("SetText", curr.textText);
+            PlayerAgent.instance.GetComponent<PokerPlayer>().money = 10000;
+        }
+
         ready = false;
+    }
+
+    public void EndPoker(PokerPlayer winner)
+    {
+        gameEvents.Dequeue();
+        ready = true;
     }
 
     public void NextEvent()

@@ -52,17 +52,34 @@ public class PokerGameManager : MonoBehaviour
     public int betAmt = 0;
     public int raiseAmt = 0;
 
+    public int playerStakeAmt = 0;
+    public int opponentStakeAmt = 0;
+    public int playerStakeSliderAmt = 0;
+
     public int bigBlind = 50;
     public int smallBlind = 25;
+    public int blindDifference = 0;
+
+    public int baseBigBlind = 50;
+    public int baseSmallBlind = 25;
 
     public int turn = 0;
     public int gameCount = 1;
 
     private Evaluator fiveCardEvaluator;
 
+    private int opponentConfidence = 0;
+
+    private bool dealerResponded = false;
+
+    public List<AudioSource> cardSounds;
+    public List<AudioSource> chipSounds;
+    public AudioSource shuffleSound;
 
     void Start()
     {
+        bigBlind = baseBigBlind;
+        smallBlind = baseSmallBlind;
         //uncomment to generate new evaluator table
         //Evaluator fiveCardEvaluator = new Evaluator(null, true, false, false, 1.25, true, false);
         //fiveCardEvaluator.SaveToFile("./eval_tables/five_card.ser");
@@ -85,6 +102,7 @@ public class PokerGameManager : MonoBehaviour
         }
 
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
 
         animator = GetComponent<Animator>();
 
@@ -101,12 +119,18 @@ public class PokerGameManager : MonoBehaviour
 
     public void StartGame(GameObject player, GameObject opponent)
     {
+        bigBlind = baseBigBlind;
+        smallBlind = baseSmallBlind;
+
         gameCount = 1;
         turn = 0;
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
         animator.SetTrigger("start");
         print("speed 1 activated");
         animator.speed = 1;
+
+        opponent.GetComponentInChildren<Camera>().enabled = true;
 
         ShuffleDeck();
         ClearTable();
@@ -123,17 +147,37 @@ public class PokerGameManager : MonoBehaviour
         //opponent.GetComponentInChildren<ParticleSystem>().Play();
     }
 
+    public void EndGame()
+    {
+        opponent.GetComponentInChildren<Camera>().enabled = false;
+        PokerPlayer winner = player.GetComponent<PokerPlayer>().money >= 0 ? player.GetComponent<PokerPlayer>() : opponent.GetComponent<PokerPlayer>();
+        animator.SetTrigger("end");
+        GameManager.instance.EndPoker(winner);
+    }
+
     public void NextGame(GameObject player, GameObject opponent)
     {
         
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
 
         GameObject oldDealer = dealer;
         dealer = nonDealer;
         nonDealer = oldDealer;
 
+        ShuffleDeck();
+        ClearTable();
+
+        if (player.GetComponent<PokerPlayer>().money <= 0 || opponent.GetComponent<PokerPlayer>().money <= 0)
+        {
+            EndGame();
+            return;
+        }
+
         gameCount++;
-        turn = 1;
+        bigBlind *= 2;
+        smallBlind *= 2;
+        StartTurnOne();
 
         print("speed 1 activated");
         animator.speed = 1;
@@ -155,6 +199,8 @@ public class PokerGameManager : MonoBehaviour
             deck.Add(cardList[nextCard]);
             intList.RemoveAt(nextCardIndex);
         }
+
+        //shuffleSound.Play();
     }
 
     void ClearTable()
@@ -162,6 +208,25 @@ public class PokerGameManager : MonoBehaviour
         tableCards.Clear();
         playerCards.Clear();
         opponentCards.Clear();
+
+        currentTablePlacementIndex = 0;
+        currentPlayerPlacementIndex = 0;
+        currentOpponentPlacementIndex = 0;
+
+        callAmt = 0;
+        raiseAmt = 0;
+        betAmt = 0;
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
+        blindDifference = 0;
+        pot = 0;
+
+        dealerResponded = false;
+
+        foreach (Transform childCard in spawnedCardLocation.transform)
+        {
+            GameObject.Destroy(childCard.gameObject);
+        }
     }
 
     void PlayNextCardToTable()
@@ -176,6 +241,10 @@ public class PokerGameManager : MonoBehaviour
         cardAnimator.SetBool("revealed", true);
 
         currentTablePlacementIndex++;
+
+        GameObject cardSound = GameObject.Instantiate(cardSounds[UnityEngine.Random.Range(0, cardSounds.Count - 1)].gameObject);
+        cardSound.SetActive(true);
+        GameObject.Destroy(cardSound, 1f);
     }
 
     void PlayNextCardToDealer()
@@ -212,6 +281,10 @@ public class PokerGameManager : MonoBehaviour
         cardAnimator.SetBool("revealed", true);
 
         currentPlayerPlacementIndex++;
+
+        GameObject cardSound = GameObject.Instantiate(cardSounds[UnityEngine.Random.Range(0, cardSounds.Count - 1)].gameObject);
+        cardSound.SetActive(true);
+        GameObject.Destroy(cardSound, 1f);
     }
 
     void PlayNextCardToOpponent()
@@ -225,6 +298,10 @@ public class PokerGameManager : MonoBehaviour
         //cardAnimator.SetBool("revealed", true);
 
         currentOpponentPlacementIndex++;
+
+        GameObject cardSound = GameObject.Instantiate(cardSounds[UnityEngine.Random.Range(0, cardSounds.Count - 1)].gameObject);
+        cardSound.SetActive(true);
+        GameObject.Destroy(cardSound, 1f);
     }
 
     void DealerPaysSmallBlind()
@@ -237,7 +314,7 @@ public class PokerGameManager : MonoBehaviour
     {
         nonDealer.GetComponent<PokerPlayer>().money -= bigBlind;
         pot += bigBlind;
-        callAmt = bigBlind - smallBlind;
+        blindDifference = bigBlind - smallBlind;
     }
 
     void DealerCalls()
@@ -248,6 +325,14 @@ public class PokerGameManager : MonoBehaviour
     void DealerActs()
     {
         print("DealerActs");
+        if (dealerResponded)
+            return;
+
+        if(blindDifference > 0)
+        {
+            callAmt += blindDifference;
+            blindDifference = 0;
+        }
         dealer.SendMessage("Poke");
         if(player == dealer)
         {
@@ -277,10 +362,18 @@ public class PokerGameManager : MonoBehaviour
     void NextTurn()
     {
         print("NextTurn");
+        dealerResponded = false;
+
         if (turn < 5)
             turn++;
         else
             Showdown();
+    }
+
+    void StartTurnOne()
+    {
+        animator.SetTrigger("startturn1");
+        turn = 1;
     }
 
 
@@ -298,8 +391,15 @@ public class PokerGameManager : MonoBehaviour
 
     IEnumerator PlayerResponds()
     {
+        if (player.GetComponent<PokerPlayer>().dealer)
+            dealerResponded = true;
+
         player.SendMessage("Poke");
-        print("player responds");
+        if (blindDifference > 0)
+        {
+            callAmt += blindDifference;
+            blindDifference = 0;
+        }
         player.GetComponent<PokerPlayer>().responding = true;
         opponent.GetComponent<PokerPlayer>().responding = false;
         animator.speed = 0;
@@ -313,7 +413,9 @@ public class PokerGameManager : MonoBehaviour
 
     void PlayerRespondsRaise()
     {
-        print("player responds (to raise)");
+        if (player.GetComponent<PokerPlayer>().dealer)
+            dealerResponded = true;
+
         player.SendMessage("Poke");
         player.GetComponent<PokerPlayer>().responding = true;
         opponent.GetComponent<PokerPlayer>().responding = false;
@@ -333,7 +435,13 @@ public class PokerGameManager : MonoBehaviour
         player.GetComponent<PokerPlayer>().money -= callAmt;
         pot += callAmt;
         callAmt = 0;
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
+
+        // animation of chips going into pot?
+
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
 
         animator.speed = 0;
         StartCoroutine(Wait(2f));
@@ -345,7 +453,10 @@ public class PokerGameManager : MonoBehaviour
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " checks.", 0);
         callAmt = 0;
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
 
         animator.speed = 0;
         StartCoroutine(Wait(2f));
@@ -355,13 +466,27 @@ public class PokerGameManager : MonoBehaviour
     {
         print("player bets " + betAmt);
         player.SendMessage("Poke");
-        LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " bets " + betAmt + ".", 0);
-        player.GetComponent<PokerPlayer>().money -= betAmt;
+
+        betAmt = betAmt - callAmt;
+        playerStakeAmt = betAmt + callAmt;
+        playerStakeSliderAmt = 0;
+
+        if (callAmt > 0)
+        {
+            LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + betAmt + ".", 0);
+        } else
+        {
+            LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " bets " + betAmt + ".", 0);
+        }
+
+        
+        player.GetComponent<PokerPlayer>().money -= (betAmt + callAmt);
         pot += betAmt;
         callAmt = betAmt;
         betAmt = 0;
 
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
 
         animator.speed = 0;
         StartCoroutine(Wait(2f, OpponentResponds()));
@@ -381,10 +506,17 @@ public class PokerGameManager : MonoBehaviour
         pot = 0;
 
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
         //print("animator speed 1");
         //animator.speed = 1;
         animator.speed = 0;
-        StartCoroutine(Wait(2f));
+        StartCoroutine(Wait(2f, RestartGame()));
+    }
+
+    IEnumerator RestartGame()
+    {
+        NextGame(player, opponent);
+        yield return "success";
     }
 
     public void PlayerRaises()
@@ -396,13 +528,13 @@ public class PokerGameManager : MonoBehaviour
         pot += raiseAmt;
         callAmt = raiseAmt;
         raiseAmt = 0;
+        playerStakeAmt = raiseAmt;
 
         animator.speed = 0;
-        StartCoroutine(Wait(2f));
-
-        OpponentRespondsRaise();
+        StartCoroutine(Wait(2f, OpponentRespondsRaise()));
 
         playerUI.gameObject.SetActive(false);
+        playerStakeSliderAmt = 0;
         //print("animator speed 1");
         //animator.speed = 1;
     }
@@ -411,6 +543,9 @@ public class PokerGameManager : MonoBehaviour
     {
         print("opponent acts");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
+        CalculateOpponentConfidence();
+        print(opponentConfidence);
+
         player.GetComponent<PokerPlayer>().responding = false;
         opponent.GetComponent<PokerPlayer>().responding = false;
 
@@ -418,46 +553,216 @@ public class PokerGameManager : MonoBehaviour
         int minBetAmount = 0;
 
         animator.speed = 0;
-        StartCoroutine(Wait(2f, OpponentChecks()));
 
+        if (opponentConfidence < 1000)
+        {
+            if (callAmt > 0)
+            {
+                if (callAmt > opponent.GetComponent<PokerPlayer>().money / 1000)
+                    StartCoroutine(Wait(2f, OpponentFolds()));
+                else
+                    StartCoroutine(Wait(2f, OpponentCalls()));
+            }
+            else
+            {
+                StartCoroutine(Wait(2f, OpponentChecks()));
+            }
+        }
+        else if (opponentConfidence < 3000)
+        {
+            if (callAmt > 0)
+            {
+                StartCoroutine(Wait(2f, OpponentCalls()));
+            }
+            else
+            {
+                StartCoroutine(Wait(2f, OpponentChecks()));
+            }
+        } else
+        {
+            betAmt = Mathf.Max((int)Mathf.Lerp(minBetAmount, maxBetAmount, ((float)opponentConfidence) / 6000f), maxBetAmount);
+            if (betAmt > 0)
+            {
+                StartCoroutine(Wait(2f, OpponentBets()));
+            } else
+            {
+                if (callAmt > 0)
+                {
+                    StartCoroutine(Wait(2f, OpponentCalls()));
+                }
+                else
+                {
+                    StartCoroutine(Wait(2f, OpponentChecks()));
+                }
+            }
+        }
+        
+
+    }
+
+    void CalculateOpponentConfidence()
+    {
+        ulong t1,t2,t3,t4,t5,o1,o2;
+        opponentConfidence = 0;
+
+        switch (turn)
+        {
+            case 1:
+                opponentConfidence += opponentCards[0].GetComponent<Card>().suit == opponentCards[1].GetComponent<Card>().suit ? 2 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == opponentCards[1].GetComponent<Card>().val ? 2 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == "A" ? 3 : 0;
+                opponentConfidence += opponentCards[1].GetComponent<Card>().val == "A" ? 3 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == "K" ? 2 : 0;
+                opponentConfidence += opponentCards[1].GetComponent<Card>().val == "K" ? 2 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == "Q" ? 2 : 0;
+                opponentConfidence += opponentCards[1].GetComponent<Card>().val == "Q" ? 2 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == "J" ? 1 : 0;
+                opponentConfidence += opponentCards[1].GetComponent<Card>().val == "J" ? 1 : 0;
+                opponentConfidence += opponentCards[0].GetComponent<Card>().val == "10" ? 1 : 0;
+                opponentConfidence += opponentCards[1].GetComponent<Card>().val == "10" ? 1 : 0;
+                opponentConfidence *= 339;
+                break;
+            case 2:
+                t1 = tableCards[0].GetComponent<Card>().GetBit();
+                t2 = tableCards[1].GetComponent<Card>().GetBit();
+                t3 = tableCards[2].GetComponent<Card>().GetBit();
+
+                o1 = opponentCards[0].GetComponent<Card>().GetBit();
+                o2 = opponentCards[1].GetComponent<Card>().GetBit();
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | o2));
+                break;
+            case 3:
+                t1 = tableCards[0].GetComponent<Card>().GetBit();
+                t2 = tableCards[1].GetComponent<Card>().GetBit();
+                t3 = tableCards[2].GetComponent<Card>().GetBit();
+                t4 = tableCards[3].GetComponent<Card>().GetBit();
+
+                o1 = opponentCards[0].GetComponent<Card>().GetBit();
+                o2 = opponentCards[1].GetComponent<Card>().GetBit();
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o1));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | t4 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | t4 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | t4 | o2));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o2 | o1));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | t4 | o1));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | t4 | o1));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | t4 | o1));
+                break;
+            case 4:
+                t1 = tableCards[0].GetComponent<Card>().GetBit();
+                t2 = tableCards[1].GetComponent<Card>().GetBit();
+                t3 = tableCards[2].GetComponent<Card>().GetBit();
+                t4 = tableCards[3].GetComponent<Card>().GetBit();
+                t5 = tableCards[4].GetComponent<Card>().GetBit();
+
+                o1 = opponentCards[0].GetComponent<Card>().GetBit();
+                o2 = opponentCards[1].GetComponent<Card>().GetBit();
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | t5));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | o2 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | t2 | o2 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | o2 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o1 | t2 | t3 | t4 | o2));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o1 | o2 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | o2 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o1 | t3 | t4 | o2));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | o2 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o1 | t4 | o2));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o1 | o2));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o1));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | o1 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | t2 | o1 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | o1 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(o2 | t2 | t3 | t4 | o1));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o2 | o1 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | o1 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | o2 | t3 | t4 | o1));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | t4 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | o1 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | o2 | t4 | o1));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o2 | t5));
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | o2 | o1));
+
+                opponentConfidence = Mathf.Max(opponentConfidence, fiveCardEvaluator.Evaluate(t1 | t2 | t3 | t4 | o2));
+                break;
+        }
+        
     }
 
     IEnumerator OpponentResponds()
     {
-        print("opponent responds");
+        if (opponent.GetComponent<PokerPlayer>().dealer)
+            dealerResponded = true;
+
         opponent.SendMessage("Poke");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
         player.GetComponent<PokerPlayer>().responding = false;
         opponent.GetComponent<PokerPlayer>().responding = true;
+        CalculateOpponentConfidence();
+        print(opponentConfidence);
+
+        if (blindDifference > 0)
+        {
+            callAmt += blindDifference;
+            blindDifference = 0;
+        }
 
         int maxBetAmount = Mathf.Min(opponent.GetComponent<PokerPlayer>().money, player.GetComponent<PokerPlayer>().money);
         int minBetAmount = callAmt;
 
         animator.speed = 0;
-        yield return Wait(2f, OpponentCalls());
+        if (opponentConfidence < 1000)
+        {
+            yield return Wait(2f, OpponentFolds());
+        } else if (opponentConfidence < 3000)
+        {
+            yield return Wait(2f, OpponentCalls());
+        } else
+        {
+            int maxRaiseAmount = maxBetAmount - callAmt;
+            betAmt = Mathf.Max((int)Mathf.Lerp(0, maxRaiseAmount, ((float)opponentConfidence) / 6000f), maxRaiseAmount);
+            if (betAmt > 0)
+            {
+                yield return Wait(2f, OpponentRaises());
+            } else
+            {
+                yield return Wait(2f, OpponentCalls());
+            }
+            
+        }
+            
 
         // if confident, raise or call, else fold
     }
 
-    /*IEnumerator OpponentResponseCoroutine()
+    IEnumerator OpponentRespondsRaise()
     {
-        print("OpponentResponseCoroutine");
-        //Print the time of when the function is first called.
-        Debug.Log("Started Coroutine at timestamp : " + Time.time);
+        if (opponent.GetComponent<PokerPlayer>().dealer)
+            dealerResponded = true;
 
-        print("waiting 1 second");
-        //trigger opponent thinking animation
-        yield return new WaitForSeconds(1);
+        CalculateOpponentConfidence();
+        print(opponentConfidence);
 
-        OpponentCalls();
-        
-        //After we have waited 5 seconds print the time again.
-        Debug.Log("Finished Coroutine at timestamp : " + Time.time);
-    }*/
-
-    void OpponentRespondsRaise()
-    {
-        print("opponent responds (to raise)");
         opponent.SendMessage("Poke");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " responds to your raise.", 1);
         player.GetComponent<PokerPlayer>().responding = false;
@@ -467,7 +772,16 @@ public class PokerGameManager : MonoBehaviour
         int minBetAmount = callAmt;
 
         animator.speed = 0;
-        StartCoroutine(Wait(2f, OpponentCalls()));
+
+        if (opponentConfidence < 2000)
+        {
+            yield return Wait(2f, OpponentFolds());
+        }
+        else
+        {
+            yield return Wait(2f, OpponentCalls());
+        }
+        //StartCoroutine(Wait(2f, OpponentCalls()));
 
         // if confident, call, else fold
     }
@@ -480,6 +794,8 @@ public class PokerGameManager : MonoBehaviour
         opponent.GetComponent<PokerPlayer>().money -= callAmt;
         pot += callAmt;
         callAmt = 0;
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
 
         animator.speed = 0;
         yield return Wait(2f);
@@ -498,22 +814,14 @@ public class PokerGameManager : MonoBehaviour
             yield return callback;
     }
 
-    IEnumerator OpponentCallCoroutine()
-    {
-        print("waiting 1 second");
-        yield return new WaitForSeconds(1f);
-
-        print("animator speed 1");
-        animator.speed = 1;
-        print("1 sec later");
-    }
-
     IEnumerator OpponentChecks()
     {
         print("opponent checks");
         opponent.SendMessage("Poke");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " checks.", 1);
         callAmt = 0;
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
 
         animator.speed = 0;
         yield return Wait(2f);
@@ -527,17 +835,14 @@ public class PokerGameManager : MonoBehaviour
         opponent.GetComponent<PokerPlayer>().money -= betAmt;
         pot += betAmt;
         callAmt = betAmt;
+        opponentStakeAmt = callAmt;
         betAmt = 0;
 
         yield return Wait(2f, PlayerResponds());
 
-        //PlayerResponds();
-
-        //print("animator speed 1");
-        //animator.speed = 1;
     }
 
-    public void OpponentFolds()
+    IEnumerator OpponentFolds()
     {
         print("opponent folds");
         opponent.SendMessage("Poke");
@@ -549,21 +854,24 @@ public class PokerGameManager : MonoBehaviour
 
         
         animator.speed = 0;
-        StartCoroutine(Wait(2f));
+        yield return Wait(2f, RestartGame());
 
     }
 
-    public void OpponentRaises()
+    IEnumerator OpponentRaises()
     {
         print("opponent raises " + raiseAmt);
         opponent.SendMessage("Poke");
-        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " raises " + raiseAmt + ".", 1);
+
+        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + "and raises " + raiseAmt + ".", 1);
         opponent.GetComponent<PokerPlayer>().money -= raiseAmt;
         pot += raiseAmt;
         callAmt = raiseAmt;
         raiseAmt = 0;
+        opponentStakeAmt = raiseAmt;
 
         PlayerRespondsRaise();
+        yield return "success";
     }
 
     void Showdown()
@@ -590,18 +898,6 @@ public class PokerGameManager : MonoBehaviour
 
         ulong o1 = opponentCards[0].GetComponent<Card>().GetBit();
         ulong o2 = opponentCards[1].GetComponent<Card>().GetBit();
-
-        print(t1);
-        print(t2);
-        print(t3);
-        print(t4);
-        print(t5);
-
-        print(p1);
-        print(p2);
-
-        print(o1);
-        print(o2);
 
         int playerScore = 0;
         playerScore = Mathf.Max(playerScore, fiveCardEvaluator.Evaluate( t1 | t2 | t3 | t4 | t5 ));
@@ -696,17 +992,60 @@ public class PokerGameManager : MonoBehaviour
 
         print("opponent score: " + opponentScore);
 
+        StartCoroutine(Wait(1f, ShowdownResults(playerScore, opponentScore)));
+    }
+
+    IEnumerator ShowdownResults(int playerScore, int opponentScore)
+    {
         if (playerScore > opponentScore)
         {
             print("player wins the pot");
-        } else if (playerScore == opponentScore)
+            PotToPlayer();
+            LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " wins the pot!", 0);
+        }
+        else if (playerScore == opponentScore)
         {
             print("draw: player splits the pot");
-        } else
+            SplitPot();
+            LaunchTextbox("Draw... " + player.GetComponent<PokerPlayer>().playerName + " and " + opponent.GetComponent<PokerPlayer>().playerName + " split the pot.", 2);
+        }
+        else
         {
             print("opponent wins the pot");
+            PotToOpponent();
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " wins the pot!", 0);
         }
 
+        yield return Wait(4f);
+
+        NextGame(player, opponent);
+    }
+
+    void PotToPlayer()
+    {
+        PokerPlayer pp = player.GetComponent<PokerPlayer>();
+        pp.money += pot;
+        pot = 0;
+    }
+
+    void PotToOpponent()
+    {
+        PokerPlayer pp = opponent.GetComponent<PokerPlayer>();
+        pp.money += pot;
+        pot = 0;
+    }
+
+    void SplitPot()
+    {
+        if (pot % 2 == 1)
+            pot--;
+
+        PokerPlayer pp = player.GetComponent<PokerPlayer>();
+        pp.money += pot/2;
+
+        PokerPlayer op = opponent.GetComponent<PokerPlayer>();
+        pp.money += pot/2;
+        pot = 0;
     }
 
     void LaunchTextbox(string text, int mode)
