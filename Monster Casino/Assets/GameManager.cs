@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     public bool eventInProgress = false;
     public bool ready = true;
 
-    public GameObject dialogWindow;
+    public GameObject dialogWindow, choiceWindow;
 
     public GameObject explosion;
 
@@ -82,7 +82,77 @@ public class GameManager : MonoBehaviour
             StartCoroutine(KillGameObject(2f, curr.pokerOpponent.gameObject));
         }
 
-        
+        if(curr.nodeType == GameEventType.ChoiceBranch)
+        {
+            GameObject windowInstance = GameObject.Instantiate(choiceWindow);
+            windowInstance.SendMessage("SetName", curr.nameText);
+            windowInstance.SendMessage("SetText", curr.textText);
+            windowInstance.SendMessage("SetChoiceA", curr.choiceA);
+            windowInstance.SendMessage("SetChoiceB", curr.choiceB);
+            windowInstance.SendMessage("SetBranchA", curr.branchA);
+            windowInstance.SendMessage("SetBranchB", curr.branchB);
+            //windowInstance.branchA = curr.branchA;
+
+            //PlayerAgent.instance.GetComponent<PokerPlayer>().money = 10000;
+        }
+
+        if (curr.nodeType == GameEventType.AlterMoney)
+        {
+            PlayerAgent.instance.GetComponent<PokerPlayer>().money += curr.cost;
+            //cha-ching sfx?
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.EnoughMoneyBranch)
+        {
+            if(PlayerAgent.instance.GetComponent<PokerPlayer>().money >= curr.cost)
+            {
+                foreach (GameNode n in curr.branchA)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            } else
+            {
+                foreach (GameNode n in curr.branchB)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            }
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.JoinParty)
+        {
+            PlayerAgent.instance.partyMembers.Add(curr.partyMember);
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.IsPartyMemberBranch)
+        {
+            bool isPartyMember = false;
+            foreach(PartyMember partyMember in PlayerAgent.instance.partyMembers)
+            {
+                if (partyMember.gameObject == curr.partyMember.gameObject)
+                    isPartyMember = true;
+            }
+
+            if(isPartyMember)
+            {
+                foreach (GameNode n in curr.branchA)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            }
+            else
+            {
+                foreach (GameNode n in curr.branchB)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            }
+            NextEvent();
+        }
+
     }
 
     IEnumerator KillGameObject(float waitTime, GameObject deadGuy)

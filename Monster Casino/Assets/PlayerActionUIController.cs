@@ -15,7 +15,9 @@ public class PlayerActionUIController : MonoBehaviour
 
     public bool noRaise = false;
 
-    public void ResetBetSlider()
+    public List<GameObject> partySkillButtons;
+
+    void ResetBetSlider()
     {
         maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money);
         minBetAmount = PokerGameManager.instance.callAmt; //responding ? PokerGameManager.instance.callAmt : 0;
@@ -26,6 +28,26 @@ public class PlayerActionUIController : MonoBehaviour
     void Start()
     {
         
+    }
+
+    public void ResetPlayerUI()
+    {
+        ResetBetSlider();
+        ResetSkillButtons();
+    }
+
+    void ResetSkillButtons()
+    {
+        foreach(GameObject party in partySkillButtons)
+        {
+            party.SetActive(false);
+        }
+        for(int i = 0; i < PlayerAgent.instance.partyMembers.Count; i++)
+        {
+            partySkillButtons[i].gameObject.SetActive(true);
+            partySkillButtons[i].GetComponentInChildren<Text>(true).text = PlayerAgent.instance.partyMembers[i].AbilityTooltip(PokerGameManager.instance.discountBought);
+            partySkillButtons[i].GetComponentInChildren<RawImage>().texture = PlayerAgent.instance.partyMembers[i].abilitySprite;
+        }
     }
 
     void Update()
@@ -62,7 +84,7 @@ public class PlayerActionUIController : MonoBehaviour
 
         if (betSlider.value > minBetAmount)
         {
-            if (responding)
+            if (responding || PokerGameManager.instance.callAmt > 0)
             {
                 raiseButton.gameObject.SetActive(true);
 
@@ -92,7 +114,7 @@ public class PlayerActionUIController : MonoBehaviour
         }
 
         betAmt = (int)betSlider.value;
-        if (responding)
+        if (responding || PokerGameManager.instance.callAmt > 0)
         {
             PokerGameManager.instance.raiseAmt = betAmt;
         } else

@@ -87,6 +87,8 @@ public class PokerGameManager : MonoBehaviour
 
     private bool cardsRevealed = false;
 
+    public bool discountBought = false;
+
     void Start()
     {
         bigBlind = baseBigBlind;
@@ -421,7 +423,7 @@ public class PokerGameManager : MonoBehaviour
         playerUI.noRaise = false;
         print("ui active");
         playerUI.gameObject.SetActive(true);
-        playerUI.ResetBetSlider();
+        playerUI.ResetPlayerUI();
     }
 
     IEnumerator PlayerResponds()
@@ -445,7 +447,7 @@ public class PokerGameManager : MonoBehaviour
         playerUI.noRaise = false;
         print("ui active");
         playerUI.gameObject.SetActive(true);
-        playerUI.ResetBetSlider();
+        playerUI.ResetPlayerUI();
         yield return "success";
     }
 
@@ -465,7 +467,7 @@ public class PokerGameManager : MonoBehaviour
         playerUI.noRaise = true;
         print("ui active");
         playerUI.gameObject.SetActive(true);
-        playerUI.ResetBetSlider();
+        playerUI.ResetPlayerUI();
     }
 
     public void PlayerCalls()
@@ -586,7 +588,7 @@ public class PokerGameManager : MonoBehaviour
     void OpponentActs()
     {
         print("opponent acts");
-        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
+        //LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
         CalculateOpponentConfidence();
         print(opponentConfidence);
 
@@ -603,31 +605,35 @@ public class PokerGameManager : MonoBehaviour
 
         if (opponentConfidence < 1000)
         {
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " doesn't look very confident...", 1);
             if (callAmt > 0)
             {
-                if (callAmt > opponent.GetComponent<PokerPlayer>().money / 1000)
-                    StartCoroutine(Wait(2f, OpponentFolds()));
+                
+                if (callAmt > opponent.GetComponent<PokerPlayer>().money * ((float)opponentConfidence/1000f) * .25f)
+                    StartCoroutine(Wait(1f, OpponentFolds()));
                 else
-                    StartCoroutine(Wait(2f, OpponentCalls()));
+                    StartCoroutine(Wait(1f, OpponentCalls()));
             }
             else
             {
-                StartCoroutine(Wait(2f, OpponentChecks()));
+                StartCoroutine(Wait(1f, OpponentChecks()));
             }
         }
-        else if (opponentConfidence < 3000)
+        else if (opponentConfidence < 2000)
         {
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " nods positively.", 1);
             if (callAmt > 0)
             {
-                StartCoroutine(Wait(2f, OpponentCalls()));
+                StartCoroutine(Wait(1f, OpponentCalls()));
             }
             else
             {
-                StartCoroutine(Wait(2f, OpponentChecks()));
+                StartCoroutine(Wait(1f, OpponentChecks()));
             }
         } else
         {
-            betAmt = Mathf.Max((int)Mathf.Lerp(minBetAmount, maxBetAmount, ((float)opponentConfidence) / 6000f), maxBetAmount);
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " smirks menacingly.", 1);
+            betAmt = Mathf.Min((int)Mathf.Lerp(minBetAmount, maxBetAmount, ((float)opponentConfidence) / 10000f), maxBetAmount);
             if (betAmt > 0)
             {
                 StartCoroutine(Wait(2f, OpponentBets()));
@@ -765,7 +771,7 @@ public class PokerGameManager : MonoBehaviour
         player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
 
         opponent.SendMessage("Poke");
-        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
+        //LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
         player.GetComponent<PokerPlayer>().responding = false;
         opponent.GetComponent<PokerPlayer>().responding = true;
         CalculateOpponentConfidence();
@@ -783,20 +789,23 @@ public class PokerGameManager : MonoBehaviour
         animator.speed = 0;
         if (opponentConfidence < 1000)
         {
-            yield return Wait(2f, OpponentFolds());
-        } else if (opponentConfidence < 3000)
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " doesn't look very confident...", 1);
+            yield return Wait(1f, OpponentFolds());
+        } else if (opponentConfidence < 2000)
         {
-            yield return Wait(2f, OpponentCalls());
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " shrugs.", 1);
+            yield return Wait(1f, OpponentCalls());
         } else
         {
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " cackles like a maniac.", 1);
             int maxRaiseAmount = maxBetAmount - callAmt;
-            raiseAmt = Mathf.Max((int)Mathf.Lerp(0, maxRaiseAmount, ((float)opponentConfidence) / 6000f), maxRaiseAmount);
+            raiseAmt = Mathf.Min((int)Mathf.Lerp(0, maxRaiseAmount, ((float)opponentConfidence) / 10000f), maxRaiseAmount);
             if (raiseAmt > 0)
             {
-                yield return Wait(2f, OpponentRaises());
+                yield return Wait(1f, OpponentRaises());
             } else
             {
-                yield return Wait(2f, OpponentCalls());
+                yield return Wait(1f, OpponentCalls());
             }
             
         }
@@ -1118,7 +1127,7 @@ public class PokerGameManager : MonoBehaviour
         pp.money += pot/2;
 
         PokerPlayer op = opponent.GetComponent<PokerPlayer>();
-        pp.money += pot/2;
+        op.money += pot/2;
         pot = 0;
     }
 
@@ -1149,26 +1158,84 @@ public class PokerGameManager : MonoBehaviour
         
     }
 
-    public void UsePartyAbility(int partyMember)
+    public void UsePartyAbility(int index)
     {
-        if(cardsRevealed)
-        {
-            LaunchTextbox("No need to peek.", 0);
-        } else if (securityLevel <= 75)
-        {
-            securityLevel = Mathf.Min(100, securityLevel + 25);
-            UpdateSecurityVisuals();
-            LaunchTextbox("Dog used Peek!", 0);
-            opponentCards[0].GetComponent<Animator>().SetBool("revealed", true);
-            opponentCards[1].GetComponent<Animator>().SetBool("revealed", true);
-            cardsRevealed = true;
-        } else
-        {
-            LaunchTextbox("Dog says: Sorry, I've got too much heat on me.", 0);
-        }
+        PartyMember partyMember = PlayerAgent.instance.partyMembers[index];
         
+        switch(partyMember.ability)
+        {
+            case PartyAbility.Peek:
+                if (cardsRevealed)
+                {
+                    LaunchTextbox("No need to peek.", 0);
+                }
+                else if (securityLevel <= 100 - partyMember.AbilityCost(discountBought))
+                {
+                    securityLevel = Mathf.Min(100, securityLevel + partyMember.AbilityCost(discountBought));
+                    UpdateSecurityVisuals();
+                    LaunchTextbox(partyMember.name + " used Peek!", 0);
+                    opponentCards[0].GetComponent<Animator>().SetBool("revealed", true);
+                    opponentCards[1].GetComponent<Animator>().SetBool("revealed", true);
+                    cardsRevealed = true;
+                }
+                else
+                {
+                    LaunchTextbox(partyMember.name + " says: Sorry, I've got too much heat on me.", 0);
+                }
+                break;
+            case PartyAbility.Switcharoo:
+                if (securityLevel <= 100 - partyMember.AbilityCost(discountBought))
+                {
+                    securityLevel = Mathf.Min(100, securityLevel + partyMember.AbilityCost(discountBought));
+                    UpdateSecurityVisuals();
+                    LaunchTextbox(partyMember.name + " used Switcharoo!", 0);
 
+                    GameObject tempCard0 = opponentCards[0];
+                    GameObject tempCard1 = opponentCards[1];
+                    opponentCards[0] = playerCards[0];
+                    opponentCards[1] = playerCards[1];
+                    playerCards[0] = tempCard0;
+                    playerCards[1] = tempCard1;
 
+                    playerCards[0].GetComponent<Animator>().SetBool("revealed", true);
+                    playerCards[1].GetComponent<Animator>().SetBool("revealed", true);
+                    cardsRevealed = true;
+
+                    StartCoroutine(SwitcherooAnimation());
+                }
+                else
+                {
+                    LaunchTextbox(partyMember.name + " says: Sorry, I've got too much heat on me.", 0);
+                }
+                break;
+            case PartyAbility.Inebriate:
+
+                break;
+            case PartyAbility.Intimidate:
+
+                break;
+        }
+    }
+
+    IEnumerator SwitcherooAnimation()
+    {
+        while(playerCards[0].transform.position != playerCardsPlacements[0].transform.position
+            && playerCards[1].transform.position != playerCardsPlacements[1].transform.position
+            && opponentCards[0].transform.position != opponentCardPlacements[0].transform.position
+            && opponentCards[1].transform.position != opponentCardPlacements[1].transform.position)
+        {
+            yield return MoveCardsToProperSpot();
+        }
+    }
+
+    IEnumerator MoveCardsToProperSpot()
+    {
+        yield return new WaitForEndOfFrame();
+
+        playerCards[0].transform.position = Vector3.Lerp(playerCards[0].transform.position, playerCardsPlacements[0].transform.position, Time.deltaTime * 10f);
+        playerCards[1].transform.position = Vector3.Lerp(playerCards[1].transform.position, playerCardsPlacements[1].transform.position, Time.deltaTime * 10f);
+        opponentCards[0].transform.position = Vector3.Lerp(opponentCards[0].transform.position, opponentCardPlacements[0].transform.position, Time.deltaTime * 10f);
+        opponentCards[1].transform.position = Vector3.Lerp(opponentCards[1].transform.position, opponentCardPlacements[1].transform.position, Time.deltaTime * 10f);
     }
 
     private void UpdateSecurityVisuals()

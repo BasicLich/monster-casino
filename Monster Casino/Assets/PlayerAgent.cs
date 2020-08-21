@@ -13,6 +13,8 @@ public class PlayerAgent : MonoBehaviour
     NavMeshAgent agent;
     Animator animator;
 
+    public List<PartyMember> partyMembers;
+
     void Start()
     {
         if (instance == null)

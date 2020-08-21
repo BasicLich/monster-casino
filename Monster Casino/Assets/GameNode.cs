@@ -9,6 +9,11 @@ public enum GameEventType
     SetVariable,
     EmergencyDog,
     KillOpponent,
+    JoinParty,
+    ChoiceBranch,
+    AlterMoney,
+    EnoughMoneyBranch,
+    IsPartyMemberBranch,
 }
 public class GameNode : MonoBehaviour
 {
@@ -16,5 +21,8 @@ public class GameNode : MonoBehaviour
     public string textText;
     public GameEventType nodeType;
     public NPCController pokerOpponent;
-
+    public List<GameNode> branchA, branchB;
+    public PartyMember partyMember;
+    public int cost;
+    public string choiceA, choiceB;
 }
