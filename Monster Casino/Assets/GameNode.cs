@@ -8,6 +8,7 @@ public enum GameEventType
     PlayPoker,
     SetVariable,
     EmergencyDog,
+    KillOpponent,
 }
 public class GameNode : MonoBehaviour
 {

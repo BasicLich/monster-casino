@@ -33,7 +33,7 @@ public class PokerGameManager : MonoBehaviour
 
     public GameObject textBox;
 
-    public Transform playerTextLocation, opponentTextLocation, spawnedCardLocation;
+    public Transform playerTextLocation, opponentTextLocation, middleTextLocation, spawnedCardLocation;
 
     private Animator animator;
 
@@ -63,6 +63,9 @@ public class PokerGameManager : MonoBehaviour
     public int baseBigBlind = 50;
     public int baseSmallBlind = 25;
 
+    public int bigBlindPaid = 0;
+    public int smallBlindPaid = 0;
+
     public int turn = 0;
     public int gameCount = 1;
 
@@ -76,21 +79,24 @@ public class PokerGameManager : MonoBehaviour
     public List<AudioSource> chipSounds;
     public AudioSource shuffleSound;
 
+    private bool opponentAllIn, playerAllIn; //unused for now, just a reminder for future me
+
+    public int securityLevel = 0;
+    public Text securityText;
+    public Image securityImage;
+
+    private bool cardsRevealed = false;
+
     void Start()
     {
         bigBlind = baseBigBlind;
         smallBlind = baseSmallBlind;
+
         //uncomment to generate new evaluator table
         //Evaluator fiveCardEvaluator = new Evaluator(null, true, false, false, 1.25, true, false);
         //fiveCardEvaluator.SaveToFile("./eval_tables/five_card.ser");
+
         fiveCardEvaluator = new Evaluator(fileName: "./eval_tables/five_card.ser");
-
-        /*print(fiveCardEvaluator.Evaluate(0x00000001 | 0x00000002 | 0x00000004 | 0x00000008 | 0x00000010));
-        print(fiveCardEvaluator.Evaluate(0x1000000000000 | 0x0100000000000 | 0x0010000000000 | 0x0001000000000 | 0x0000100000000));
-        print(fiveCardEvaluator.Evaluate(0x00000001 | 0x00000010 | 0x00000100 | 0x00001000 | 0x00010000));
-        print(fiveCardEvaluator.Evaluate(0x10000000 | 0x20000000 | 0x40000000 | 0x80000000 | 0x01000000));
-
-        print(fiveCardEvaluator.Evaluate(0x0000000010000 | 0x0000000008000 | 0x0000000000400 | 0x0000200000000 | 0x0000000000001));*/
 
         if (instance == null)
         {
@@ -150,14 +156,20 @@ public class PokerGameManager : MonoBehaviour
     public void EndGame()
     {
         opponent.GetComponentInChildren<Camera>().enabled = false;
-        PokerPlayer winner = player.GetComponent<PokerPlayer>().money >= 0 ? player.GetComponent<PokerPlayer>() : opponent.GetComponent<PokerPlayer>();
+        PokerPlayer winner = player.GetComponent<PokerPlayer>().money > 0 ? player.GetComponent<PokerPlayer>() : opponent.GetComponent<PokerPlayer>();
+        opponent.GetComponent<PokerPlayer>().battleSong.Stop();
         animator.SetTrigger("end");
         GameManager.instance.EndPoker(winner);
     }
 
     public void NextGame(GameObject player, GameObject opponent)
     {
-        
+        if (securityLevel > 0)
+        {
+            securityLevel = Mathf.Max(0, securityLevel - 5);
+        }
+        UpdateSecurityVisuals();
+
         playerUI.gameObject.SetActive(false);
         playerStakeSliderAmt = 0;
 
@@ -177,7 +189,9 @@ public class PokerGameManager : MonoBehaviour
         gameCount++;
         bigBlind *= 2;
         smallBlind *= 2;
+        LaunchTextbox("Big blind and small blind have doubled.", 2);
         StartTurnOne();
+        
 
         print("speed 1 activated");
         animator.speed = 1;
@@ -219,9 +233,12 @@ public class PokerGameManager : MonoBehaviour
         playerStakeAmt = 0;
         opponentStakeAmt = 0;
         blindDifference = 0;
+        bigBlindPaid = 0;
+        smallBlindPaid = 0;
         pot = 0;
 
         dealerResponded = false;
+        cardsRevealed = false;
 
         foreach (Transform childCard in spawnedCardLocation.transform)
         {
@@ -306,15 +323,22 @@ public class PokerGameManager : MonoBehaviour
 
     void DealerPaysSmallBlind()
     {
-        dealer.GetComponent<PokerPlayer>().money -= smallBlind;
-        pot += smallBlind;
+        
+        smallBlindPaid = Mathf.Min(smallBlind, dealer.GetComponent<PokerPlayer>().money);
+        LaunchTextbox("Dealer " + dealer.GetComponent<PokerPlayer>().playerName + " pays small blind of " + smallBlindPaid + ".", dealer.GetComponent<PokerPlayer>().human ? 0 : 1);
+        dealer.GetComponent<PokerPlayer>().money -= smallBlindPaid;
+        pot += smallBlindPaid;
     }
 
     void NonDealerPaysBigBlind()
     {
-        nonDealer.GetComponent<PokerPlayer>().money -= bigBlind;
-        pot += bigBlind;
-        blindDifference = bigBlind - smallBlind;
+        bigBlindPaid = Mathf.Min(bigBlind, nonDealer.GetComponent<PokerPlayer>().money);
+        LaunchTextbox(nonDealer.GetComponent<PokerPlayer>().playerName + " pays big blind of " + bigBlindPaid + ".", nonDealer.GetComponent<PokerPlayer>().human ? 0 : 1);
+        smallBlindPaid = 0;
+        nonDealer.GetComponent<PokerPlayer>().money -= bigBlindPaid;
+        pot += bigBlindPaid;
+        //blindDifference = bigBlind - smallBlind;
+        blindDifference = bigBlindPaid - smallBlindPaid;
     }
 
     void DealerCalls()
@@ -328,7 +352,10 @@ public class PokerGameManager : MonoBehaviour
         if (dealerResponded)
             return;
 
-        if(blindDifference > 0)
+        dealer.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        nonDealer.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+
+        if (blindDifference > 0)
         {
             callAmt += blindDifference;
             blindDifference = 0;
@@ -349,6 +376,9 @@ public class PokerGameManager : MonoBehaviour
         print("NonDealerActs");
         nonDealer.SendMessage("Poke");
 
+        nonDealer.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        dealer.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+
         if (player == dealer)
         {
             OpponentActs();
@@ -364,6 +394,8 @@ public class PokerGameManager : MonoBehaviour
         print("NextTurn");
         dealerResponded = false;
 
+        cardsRevealed = false;
+
         if (turn < 5)
             turn++;
         else
@@ -372,6 +404,9 @@ public class PokerGameManager : MonoBehaviour
 
     void StartTurnOne()
     {
+        if(!opponent.GetComponent<PokerPlayer>().battleSong.isPlaying)
+            opponent.GetComponent<PokerPlayer>().battleSong.Play();
+
         animator.SetTrigger("startturn1");
         turn = 1;
     }
@@ -394,6 +429,9 @@ public class PokerGameManager : MonoBehaviour
         if (player.GetComponent<PokerPlayer>().dealer)
             dealerResponded = true;
 
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+
         player.SendMessage("Poke");
         if (blindDifference > 0)
         {
@@ -415,6 +453,9 @@ public class PokerGameManager : MonoBehaviour
     {
         if (player.GetComponent<PokerPlayer>().dealer)
             dealerResponded = true;
+
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
 
         player.SendMessage("Poke");
         player.GetComponent<PokerPlayer>().responding = true;
@@ -500,6 +541,7 @@ public class PokerGameManager : MonoBehaviour
         print("player folds");
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " folds. " + opponent.GetComponent<PokerPlayer>().playerName + " wins the pot.", 0);
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
 
         print("opponent wins pot");
         opponent.GetComponent<PokerPlayer>().money += pot;
@@ -515,6 +557,8 @@ public class PokerGameManager : MonoBehaviour
 
     IEnumerator RestartGame()
     {
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
         NextGame(player, opponent);
         yield return "success";
     }
@@ -545,6 +589,9 @@ public class PokerGameManager : MonoBehaviour
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
         CalculateOpponentConfidence();
         print(opponentConfidence);
+
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
 
         player.GetComponent<PokerPlayer>().responding = false;
         opponent.GetComponent<PokerPlayer>().responding = false;
@@ -714,6 +761,9 @@ public class PokerGameManager : MonoBehaviour
         if (opponent.GetComponent<PokerPlayer>().dealer)
             dealerResponded = true;
 
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+
         opponent.SendMessage("Poke");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is thinking...", 1);
         player.GetComponent<PokerPlayer>().responding = false;
@@ -728,7 +778,7 @@ public class PokerGameManager : MonoBehaviour
         }
 
         int maxBetAmount = Mathf.Min(opponent.GetComponent<PokerPlayer>().money, player.GetComponent<PokerPlayer>().money);
-        int minBetAmount = callAmt;
+        int minBetAmount = Mathf.Min(opponent.GetComponent<PokerPlayer>().money, callAmt);
 
         animator.speed = 0;
         if (opponentConfidence < 1000)
@@ -740,8 +790,8 @@ public class PokerGameManager : MonoBehaviour
         } else
         {
             int maxRaiseAmount = maxBetAmount - callAmt;
-            betAmt = Mathf.Max((int)Mathf.Lerp(0, maxRaiseAmount, ((float)opponentConfidence) / 6000f), maxRaiseAmount);
-            if (betAmt > 0)
+            raiseAmt = Mathf.Max((int)Mathf.Lerp(0, maxRaiseAmount, ((float)opponentConfidence) / 6000f), maxRaiseAmount);
+            if (raiseAmt > 0)
             {
                 yield return Wait(2f, OpponentRaises());
             } else
@@ -759,6 +809,9 @@ public class PokerGameManager : MonoBehaviour
     {
         if (opponent.GetComponent<PokerPlayer>().dealer)
             dealerResponded = true;
+
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartLight");
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
 
         CalculateOpponentConfidence();
         print(opponentConfidence);
@@ -790,9 +843,20 @@ public class PokerGameManager : MonoBehaviour
     {
         print("opponent calls " + callAmt);
         opponent.SendMessage("Poke");
-        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + ".", 1);
-        opponent.GetComponent<PokerPlayer>().money -= callAmt;
-        pot += callAmt;
+
+        if(callAmt > opponent.GetComponent<PokerPlayer>().money)
+        {
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is all in!", 1);
+            pot += opponent.GetComponent<PokerPlayer>().money;
+            opponent.GetComponent<PokerPlayer>().money = 0;
+        } else
+        {
+            LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + ".", 1);
+            opponent.GetComponent<PokerPlayer>().money -= callAmt;
+            pot += callAmt;
+        }
+
+        
         callAmt = 0;
         playerStakeAmt = 0;
         opponentStakeAmt = 0;
@@ -847,6 +911,7 @@ public class PokerGameManager : MonoBehaviour
         print("opponent folds");
         opponent.SendMessage("Poke");
         LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " folds. " + player.GetComponent<PokerPlayer>().playerName + " wins the pot.", 1);
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
 
         print("player wins pot");
         player.GetComponent<PokerPlayer>().money += pot;
@@ -863,7 +928,7 @@ public class PokerGameManager : MonoBehaviour
         print("opponent raises " + raiseAmt);
         opponent.SendMessage("Poke");
 
-        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + "and raises " + raiseAmt + ".", 1);
+        LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".", 1);
         opponent.GetComponent<PokerPlayer>().money -= raiseAmt;
         pot += raiseAmt;
         callAmt = raiseAmt;
@@ -1002,21 +1067,30 @@ public class PokerGameManager : MonoBehaviour
             print("player wins the pot");
             PotToPlayer();
             LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " wins the pot!", 0);
+            
+            player.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
         }
         else if (playerScore == opponentScore)
         {
             print("draw: player splits the pot");
             SplitPot();
             LaunchTextbox("Draw... " + player.GetComponent<PokerPlayer>().playerName + " and " + opponent.GetComponent<PokerPlayer>().playerName + " split the pot.", 2);
+            player.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
+            opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
         }
         else
         {
             print("opponent wins the pot");
             PotToOpponent();
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " wins the pot!", 0);
+
+            opponent.GetComponentInChildren<BattleEffects>().SendMessage("StartChips");
         }
 
         yield return Wait(4f);
+
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
 
         NextGame(player, opponent);
     }
@@ -1051,6 +1125,10 @@ public class PokerGameManager : MonoBehaviour
     void LaunchTextbox(string text, int mode)
     {
         Transform parentTransform = mode == 0 ? playerTextLocation : opponentTextLocation;
+        if(mode == 2)
+        {
+            parentTransform = middleTextLocation;
+        }
         Vector3 textMovement = mode == 0 ? Vector3.down * 130f : Vector3.down * 130f;
         GameObject launchedTextbox = GameObject.Instantiate(textBox, parentTransform);
         launchedTextbox.GetComponent<PokerGameTextBox>().LaunchText(text, Vector3.zero, textMovement, 7f);
@@ -1063,7 +1141,48 @@ public class PokerGameManager : MonoBehaviour
     {
         animator.SetInteger("turn", turn);
         potText.text = pot.ToString();
-        playerMoneyText.text = player.GetComponent<PokerPlayer>().money.ToString();
-        opponentMoneyText.text = opponent.GetComponent<PokerPlayer>().money.ToString();
+        if(player && opponent)
+        {
+            playerMoneyText.text = player.GetComponent<PokerPlayer>().money.ToString();
+            opponentMoneyText.text = opponent.GetComponent<PokerPlayer>().money.ToString();
+        }
+        
+    }
+
+    public void UsePartyAbility(int partyMember)
+    {
+        if(cardsRevealed)
+        {
+            LaunchTextbox("No need to peek.", 0);
+        } else if (securityLevel <= 75)
+        {
+            securityLevel = Mathf.Min(100, securityLevel + 25);
+            UpdateSecurityVisuals();
+            LaunchTextbox("Dog used Peek!", 0);
+            opponentCards[0].GetComponent<Animator>().SetBool("revealed", true);
+            opponentCards[1].GetComponent<Animator>().SetBool("revealed", true);
+            cardsRevealed = true;
+        } else
+        {
+            LaunchTextbox("Dog says: Sorry, I've got too much heat on me.", 0);
+        }
+        
+
+
+    }
+
+    private void UpdateSecurityVisuals()
+    {
+        if(securityLevel > 0)
+        {
+            securityText.gameObject.SetActive(true);
+            securityText.text = securityLevel.ToString() + "%";
+            securityImage.gameObject.SetActive(true);
+        } else
+        {
+            securityText.gameObject.SetActive(false);
+            securityText.text = securityLevel.ToString() + "%";
+            securityImage.gameObject.SetActive(false);
+        }
     }
 }

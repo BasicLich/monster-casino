@@ -7,6 +7,7 @@ public class NPCController : MonoBehaviour
     Animator animator;
 
     public List<GameNode> interactWithNodes;
+    public List<GameNode> playerWonNodes;
 
     void Start()
     {
@@ -26,8 +27,16 @@ public class NPCController : MonoBehaviour
 
     public void InteractWith()
     {
-        print("You wnna go???");
-        foreach(GameNode n in interactWithNodes)
+        //print("InteractWith");
+        foreach (GameNode n in interactWithNodes)
+        {
+            GameManager.instance.AddEvent(n);
+        }
+    }
+
+    public void PlayerWon()
+    {
+        foreach (GameNode n in playerWonNodes)
         {
             GameManager.instance.AddEvent(n);
         }

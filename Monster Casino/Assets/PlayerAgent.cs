@@ -31,7 +31,7 @@ public class PlayerAgent : MonoBehaviour
     void Update()
     {
         animator.SetFloat("speed", agent.velocity.magnitude);
-        if(target && Vector3.Distance(transform.position, target.transform.position) < 2f)
+        if(target && Vector3.Distance(transform.position, target.transform.position) < 3f)
         {
             target.SendMessage("InteractWith");
             target = null;

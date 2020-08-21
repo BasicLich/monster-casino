@@ -19,6 +19,7 @@ public class PlayerActionUIController : MonoBehaviour
     {
         maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money);
         minBetAmount = PokerGameManager.instance.callAmt; //responding ? PokerGameManager.instance.callAmt : 0;
+        maxBetAmount = Mathf.Max(maxBetAmount, minBetAmount);
         betSlider.value = minBetAmount;
     }
 
@@ -31,7 +32,8 @@ public class PlayerActionUIController : MonoBehaviour
     {
         bool responding = PokerGameManager.instance.player.GetComponent<PokerPlayer>().responding;
         maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money);
-        minBetAmount = PokerGameManager.instance.callAmt; //responding ? PokerGameManager.instance.callAmt : 0;
+        minBetAmount = Mathf.Min(PokerGameManager.instance.player.GetComponent<PokerPlayer>().money, PokerGameManager.instance.callAmt); //responding ? PokerGameManager.instance.callAmt : 0;
+        maxBetAmount = Mathf.Max(maxBetAmount, minBetAmount);
 
         betSlider.minValue = minBetAmount;
         betSlider.maxValue = maxBetAmount;
