@@ -169,9 +169,10 @@ public class PokerGameManager : MonoBehaviour
 
     public void NextGame(GameObject player, GameObject opponent)
     {
+        int securityReduction = discountBought ? 10 : 5;
         if (securityLevel > 0)
         {
-            securityLevel = Mathf.Max(0, securityLevel - 5);
+            securityLevel = Mathf.Max(0, securityLevel - securityReduction);
         }
         UpdateSecurityVisuals();
 
@@ -573,6 +574,7 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerRaises()
     {
+        raiseAmt -= callAmt;
         print(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".");
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".", 0);

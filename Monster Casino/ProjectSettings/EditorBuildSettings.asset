@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Title.unity
     guid: 6d2c5a5bc90a8414687a186ed5e97bf8
   - enabled: 1
+    path: Assets/Scenes/Intro.unity
+    guid: 4ff290362d4b0f84ea4a7bfabfab059f
+  - enabled: 1
     path: Assets/Scenes/Casino.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects: {}

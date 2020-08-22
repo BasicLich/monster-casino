@@ -16,7 +16,7 @@ public class MainMenu : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0))
         {
-            SceneManager.LoadScene("Casino");
+            SceneManager.LoadScene("Intro");
         }
     }
 }

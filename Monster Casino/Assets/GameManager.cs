@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -181,6 +182,12 @@ public class GameManager : MonoBehaviour
         if (curr.nodeType == GameEventType.PitBossDiscount)
         {
             PokerGameManager.instance.discountBought = true;
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.ChangeSceneNode)
+        {
+            SceneManager.LoadScene(curr.sceneName);
             NextEvent();
         }
 

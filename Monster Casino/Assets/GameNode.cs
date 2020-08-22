@@ -16,6 +16,7 @@ public enum GameEventType
     VarBranch,
     SetVar,
     PitBossDiscount,
+    ChangeSceneNode,
 }
 public class GameNode : MonoBehaviour
 {
@@ -26,5 +27,5 @@ public class GameNode : MonoBehaviour
     public List<GameNode> branchA, branchB;
     public PartyMember partyMember;
     public int cost;
-    public string choiceA, choiceB;
+    public string choiceA, choiceB, sceneName;
 }

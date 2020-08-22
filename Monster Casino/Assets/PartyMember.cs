@@ -30,15 +30,15 @@ public class PartyMember : MonoBehaviour
 
     public int AbilityCost(bool discount)
     {
-        int discountAmt = discount ? 5 : 0;
+        int discountAmt = discount ? 10 : 0;
         switch(ability)
         {
             case PartyAbility.Peek:
                 return 20 - discountAmt;
             case PartyAbility.Switcharoo:
-                return 60 - discountAmt;
+                return 50 - discountAmt;
             case PartyAbility.Inebriate:
-                return 10 - discountAmt;
+                return 15 - discountAmt;
             case PartyAbility.Intimidate:
                 return 20 - discountAmt;
         }
