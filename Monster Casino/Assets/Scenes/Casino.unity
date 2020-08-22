@@ -44398,7 +44398,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1561955038}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 499ae1ad9690f0c47bd08e627e973127, type: 3}
   m_Name: 
@@ -44434,7 +44434,7 @@ MonoBehaviour:
   money: 2000
   dealer: 0
   responding: 0
-  playerName: Webby
+  playerName: Bitey
   neverFolds: 1
   battleSong: {fileID: 1021613052}
 --- !u!114 &1561955042

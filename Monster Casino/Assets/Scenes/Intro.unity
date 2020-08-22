@@ -7865,7 +7865,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Chelle and Dog's house
+  m_Text: Chelly and Dog's house
 --- !u!222 &970952737
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9664,7 +9664,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-1214584
+  m_Name: pb_Mesh1210356
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
