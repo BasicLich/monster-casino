@@ -15,6 +15,7 @@ Monster Casino is a "gambling RPG" video game made in Unity. Created for [Miz Ja
 ## Credits
 
 * **Kenney** - *1-Bit Pack* [1-Bit Pack](https://kenney.nl/assets/bit-pack)
+* **Kenney** - *54 Casino sound effects* [54 Casino sound effects](https://opengameart.org/content/54-casino-sound-effects-cards-dice-chips)
 * **SHADOWFOX2** - *Casino song* [SHADOWFOX2](https://www.patreon.com/SHADOWFOX2)
 * **Maoudamashii** - *Battle themes and many sfx* [Maoudamashii](http://en.maoudamashii.com/)
 
