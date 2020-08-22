@@ -9,6 +9,8 @@ public class NPCController : MonoBehaviour
     public List<GameNode> interactWithNodes;
     public List<GameNode> playerWonNodes;
 
+    public bool var1 = false;
+
     void Start()
     {
         animator = GetComponent<Animator>();

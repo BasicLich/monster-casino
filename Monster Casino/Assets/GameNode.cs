@@ -6,7 +6,6 @@ public enum GameEventType
 {
     Dialog,
     PlayPoker,
-    SetVariable,
     EmergencyDog,
     KillOpponent,
     JoinParty,
@@ -14,6 +13,9 @@ public enum GameEventType
     AlterMoney,
     EnoughMoneyBranch,
     IsPartyMemberBranch,
+    VarBranch,
+    SetVar,
+    PitBossDiscount,
 }
 public class GameNode : MonoBehaviour
 {

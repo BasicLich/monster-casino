@@ -153,6 +153,37 @@ public class GameManager : MonoBehaviour
             NextEvent();
         }
 
+        if (curr.nodeType == GameEventType.VarBranch)
+        {
+            if(curr.pokerOpponent.var1)
+            {
+                foreach (GameNode n in curr.branchA)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            }
+            else
+            {
+                foreach (GameNode n in curr.branchB)
+                {
+                    GameManager.instance.AddEvent(n);
+                }
+            }
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.SetVar)
+        {
+            curr.pokerOpponent.var1 = true;
+            NextEvent();
+        }
+
+        if (curr.nodeType == GameEventType.PitBossDiscount)
+        {
+            PokerGameManager.instance.discountBought = true;
+            NextEvent();
+        }
+
     }
 
     IEnumerator KillGameObject(float waitTime, GameObject deadGuy)

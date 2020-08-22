@@ -157,6 +157,9 @@ public class PokerGameManager : MonoBehaviour
 
     public void EndGame()
     {
+        opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+        player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
+
         opponent.GetComponentInChildren<Camera>().enabled = false;
         PokerPlayer winner = player.GetComponent<PokerPlayer>().money > 0 ? player.GetComponent<PokerPlayer>() : opponent.GetComponent<PokerPlayer>();
         opponent.GetComponent<PokerPlayer>().battleSong.Stop();
@@ -336,11 +339,12 @@ public class PokerGameManager : MonoBehaviour
     {
         bigBlindPaid = Mathf.Min(bigBlind, nonDealer.GetComponent<PokerPlayer>().money);
         LaunchTextbox(nonDealer.GetComponent<PokerPlayer>().playerName + " pays big blind of " + bigBlindPaid + ".", nonDealer.GetComponent<PokerPlayer>().human ? 0 : 1);
-        smallBlindPaid = 0;
+        //smallBlindPaid = 0;
         nonDealer.GetComponent<PokerPlayer>().money -= bigBlindPaid;
         pot += bigBlindPaid;
         //blindDifference = bigBlind - smallBlind;
         blindDifference = bigBlindPaid - smallBlindPaid;
+        print("blind difference: " + blindDifference);
     }
 
     void DealerCalls()
@@ -359,8 +363,10 @@ public class PokerGameManager : MonoBehaviour
 
         if (blindDifference > 0)
         {
+            print("prev call amount: " + callAmt);
             callAmt += blindDifference;
             blindDifference = 0;
+            print("new call amount: " + callAmt);
         }
         dealer.SendMessage("Poke");
         if(player == dealer)
@@ -567,11 +573,11 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerRaises()
     {
-        print(player.GetComponent<PokerPlayer>().playerName + " raises " + raiseAmt + ".");
+        print(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".");
         player.SendMessage("Poke");
-        LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " raises " + raiseAmt + ".", 0);
-        player.GetComponent<PokerPlayer>().money -= raiseAmt;
-        pot += raiseAmt;
+        LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".", 0);
+        player.GetComponent<PokerPlayer>().money -= (callAmt + raiseAmt);
+        pot += (raiseAmt + callAmt);
         callAmt = raiseAmt;
         raiseAmt = 0;
         playerStakeAmt = raiseAmt;
@@ -608,8 +614,9 @@ public class PokerGameManager : MonoBehaviour
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " doesn't look very confident...", 1);
             if (callAmt > 0)
             {
-                
-                if (callAmt > opponent.GetComponent<PokerPlayer>().money * ((float)opponentConfidence/1000f) * .25f)
+                if (opponent.GetComponent<PokerPlayer>().neverFolds)
+                    StartCoroutine(Wait(1f, OpponentCalls()));
+                else if (callAmt > opponent.GetComponent<PokerPlayer>().money * ((float)opponentConfidence/1000f) * .25f)
                     StartCoroutine(Wait(1f, OpponentFolds()));
                 else
                     StartCoroutine(Wait(1f, OpponentCalls()));
@@ -790,7 +797,10 @@ public class PokerGameManager : MonoBehaviour
         if (opponentConfidence < 1000)
         {
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " doesn't look very confident...", 1);
-            yield return Wait(1f, OpponentFolds());
+            if (opponent.GetComponent<PokerPlayer>().neverFolds)
+                yield return Wait(1f, OpponentCalls());
+            else
+                yield return Wait(1f, OpponentFolds());
         } else if (opponentConfidence < 2000)
         {
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " shrugs.", 1);
@@ -837,7 +847,10 @@ public class PokerGameManager : MonoBehaviour
 
         if (opponentConfidence < 2000)
         {
-            yield return Wait(2f, OpponentFolds());
+            if (opponent.GetComponent<PokerPlayer>().neverFolds)
+                yield return Wait(2f, OpponentCalls());
+            else
+                yield return Wait(2f, OpponentFolds());
         }
         else
         {

@@ -53,7 +53,7 @@ public class PlayerActionUIController : MonoBehaviour
     void Update()
     {
         bool responding = PokerGameManager.instance.player.GetComponent<PokerPlayer>().responding;
-        maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money);
+        maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money + PokerGameManager.instance.callAmt);
         minBetAmount = Mathf.Min(PokerGameManager.instance.player.GetComponent<PokerPlayer>().money, PokerGameManager.instance.callAmt); //responding ? PokerGameManager.instance.callAmt : 0;
         maxBetAmount = Mathf.Max(maxBetAmount, minBetAmount);
 
