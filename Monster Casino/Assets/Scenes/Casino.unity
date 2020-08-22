@@ -40412,6 +40412,10 @@ PrefabInstance:
       propertyPath: textText
       value: I've got a thick skull, so don't even think about beating me.
       objectReference: {fileID: 0}
+    - target: {fileID: 2034173968650214076, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: textText
+      value: Give a dog a bone! (haha)
+      objectReference: {fileID: 0}
     - target: {fileID: 2034173968732064572, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: nameText
       value: Skelly
