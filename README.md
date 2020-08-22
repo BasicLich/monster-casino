@@ -2,14 +2,10 @@
 
 Monster Casino is a "gambling RPG" video game made in Unity. Created for [Miz Jam 1](https://itch.io/jam/miz-jam-1). Gameplay involves exploring a casino and challenging monsters to poker matches in order to secure rent money. Some monsters can be recruited to cheat for you.
 
-
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Installing
 
 * Install Unity 2020.1.2f1
+* Be sure eval_tables\five_card.ser is in the root directory when running the game
 
 ## Built With
 
