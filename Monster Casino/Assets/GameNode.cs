@@ -28,4 +28,5 @@ public class GameNode : MonoBehaviour
     public PartyMember partyMember;
     public int cost;
     public string choiceA, choiceB, sceneName;
+    public bool tutorial;
 }

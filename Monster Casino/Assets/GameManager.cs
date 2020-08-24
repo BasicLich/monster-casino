@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
             PokerGameManager.instance.gameObject.SetActive(true);
             PokerGameManager.instance.player = PlayerAgent.instance.gameObject;
             PokerGameManager.instance.opponent = curr.pokerOpponent.gameObject;
+            PokerGameManager.instance.tutorial = curr.tutorial;
             PokerGameManager.instance.StartGame(PlayerAgent.instance.gameObject, curr.pokerOpponent.gameObject);
         }
 

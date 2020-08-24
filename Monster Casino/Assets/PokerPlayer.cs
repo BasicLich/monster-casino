@@ -10,6 +10,7 @@ public class PokerPlayer : MonoBehaviour
     public bool responding = false;
     public string playerName;
     public bool neverFolds = false;
+    public bool tutorial = false;
 
     public AudioSource battleSong;
 

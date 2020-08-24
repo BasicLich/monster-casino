@@ -89,6 +89,19 @@ public class PokerGameManager : MonoBehaviour
 
     public bool discountBought = false;
 
+    public bool tutorial = false;
+
+    public Queue<GameObject> gameEventQueue;
+
+    public List<GameObject> turn1Tutorial;
+    public List<GameObject> turn2Tutorial;
+    public List<GameObject> turn3Tutorial;
+    public List<GameObject> turn4Tutorial;
+
+    private int opponentStartAmt, playerStartAmt, startSecurityLevel;
+
+    public Transform gameEventParent;
+
     void Start()
     {
         bigBlind = baseBigBlind;
@@ -98,7 +111,11 @@ public class PokerGameManager : MonoBehaviour
         //Evaluator fiveCardEvaluator = new Evaluator(null, true, false, false, 1.25, true, false);
         //fiveCardEvaluator.SaveToFile("./eval_tables/five_card.ser");
 
-        fiveCardEvaluator = new Evaluator(fileName: "./eval_tables/five_card.ser");
+
+        TextAsset fiveCard = (TextAsset) Resources.Load("five_card");
+
+        //fiveCardEvaluator = new Evaluator(fileName: "./eval_tables/five_card.ser");
+        fiveCardEvaluator = new Evaluator(fileBytes: fiveCard.bytes);
 
         if (instance == null)
         {
@@ -120,13 +137,27 @@ public class PokerGameManager : MonoBehaviour
         playerCards = new List<GameObject>();
         opponentCards = new List<GameObject>();
 
-        
+        gameEventQueue = new Queue<GameObject>();
 
         //ResetGame(opponent, player);
     }
 
     public void StartGame(GameObject player, GameObject opponent)
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
+        if(tutorial)
+        {
+            playerStartAmt = player.GetComponent<PokerPlayer>().money;
+            opponentStartAmt = opponent.GetComponent<PokerPlayer>().money;
+            startSecurityLevel = securityLevel;
+        }
+
+        UpdateSecurityVisuals();
+
         bigBlind = baseBigBlind;
         smallBlind = baseSmallBlind;
 
@@ -157,6 +188,12 @@ public class PokerGameManager : MonoBehaviour
 
     public void EndGame()
     {
+        while(gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+        //gameEventQueue.Clear();
+
         opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
         player.GetComponentInChildren<BattleEffects>().SendMessage("StopLight");
 
@@ -164,6 +201,16 @@ public class PokerGameManager : MonoBehaviour
         PokerPlayer winner = player.GetComponent<PokerPlayer>().money > 0 ? player.GetComponent<PokerPlayer>() : opponent.GetComponent<PokerPlayer>();
         opponent.GetComponent<PokerPlayer>().battleSong.Stop();
         animator.SetTrigger("end");
+
+        ClearTable();
+
+        if (tutorial)
+        {
+            player.GetComponent<PokerPlayer>().money = playerStartAmt;
+            opponent.GetComponent<PokerPlayer>().money = opponentStartAmt;
+            securityLevel = startSecurityLevel;
+        }
+
         GameManager.instance.EndPoker(winner);
     }
 
@@ -423,6 +470,33 @@ public class PokerGameManager : MonoBehaviour
 
     void PlayerActs()
     {
+        if(tutorial)
+        {
+            //gameEventQueue.Enqueue
+            // consider moving nextturn stuff here
+            if (tutorial)
+            {
+                switch (turn)
+                {
+                    case 1:
+                        foreach (GameObject tutorialEvent in turn1Tutorial)
+                            gameEventQueue.Enqueue(GameObject.Instantiate(tutorialEvent, gameEventParent));
+                        break;
+                    case 2:
+                        foreach (GameObject tutorialEvent in turn2Tutorial)
+                            gameEventQueue.Enqueue(GameObject.Instantiate(tutorialEvent, gameEventParent));
+                        break;
+                    case 3:
+                        foreach (GameObject tutorialEvent in turn3Tutorial)
+                            gameEventQueue.Enqueue(GameObject.Instantiate(tutorialEvent, gameEventParent));
+                        break;
+                    case 4:
+                        foreach (GameObject tutorialEvent in turn4Tutorial)
+                            gameEventQueue.Enqueue(GameObject.Instantiate(tutorialEvent, gameEventParent));
+                        break;
+                }
+            }
+        }
         print("player acts");
         player.GetComponent<PokerPlayer>().responding = false;
         opponent.GetComponent<PokerPlayer>().responding = false;
@@ -479,6 +553,11 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerCalls()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         print("player calls " + callAmt);
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + ".", 0);
@@ -499,6 +578,11 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerChecks()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         print("player checks");
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " checks.", 0);
@@ -514,6 +598,11 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerBets()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         print("player bets " + betAmt);
         player.SendMessage("Poke");
 
@@ -547,6 +636,11 @@ public class PokerGameManager : MonoBehaviour
 
     public void PlayerFolds()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         print("player folds");
         player.SendMessage("Poke");
         LaunchTextbox(player.GetComponent<PokerPlayer>().playerName + " folds. " + opponent.GetComponent<PokerPlayer>().playerName + " wins the pot.", 0);
@@ -566,14 +660,31 @@ public class PokerGameManager : MonoBehaviour
 
     IEnumerator RestartGame()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         player.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
         opponent.GetComponentInChildren<BattleEffects>().SendMessage("StopChips");
-        NextGame(player, opponent);
+        if (tutorial)
+        {
+            EndGame();
+        }
+        else
+        {
+            NextGame(player, opponent);
+        }
         yield return "success";
     }
 
     public void PlayerRaises()
     {
+        while (gameEventQueue.Count > 0)
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
         raiseAmt -= callAmt;
         print(player.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + " and raises " + raiseAmt + ".");
         player.SendMessage("Poke");
@@ -1171,6 +1282,16 @@ public class PokerGameManager : MonoBehaviour
             opponentMoneyText.text = opponent.GetComponent<PokerPlayer>().money.ToString();
         }
         
+        if (gameEventQueue.Count > 0 && Input.GetMouseButtonDown(0))
+        {
+            GameObject.Destroy(gameEventQueue.Dequeue());
+        }
+
+        if (gameEventQueue.Count > 0 && !gameEventQueue.Peek().activeInHierarchy)
+        {
+            gameEventQueue.Peek().SetActive(true);
+        }
+
     }
 
     public void UsePartyAbility(int index)
@@ -1255,16 +1376,16 @@ public class PokerGameManager : MonoBehaviour
 
     private void UpdateSecurityVisuals()
     {
-        if(securityLevel > 0)
-        {
+        //if(securityLevel > 0)
+        //{
             securityText.gameObject.SetActive(true);
             securityText.text = securityLevel.ToString() + "%";
             securityImage.gameObject.SetActive(true);
-        } else
-        {
-            securityText.gameObject.SetActive(false);
-            securityText.text = securityLevel.ToString() + "%";
-            securityImage.gameObject.SetActive(false);
-        }
+        //} else
+        //{
+            //securityText.gameObject.SetActive(false);
+            //securityText.text = securityLevel.ToString() + "%";
+            //securityImage.gameObject.SetActive(false);
+        //}
     }
 }
