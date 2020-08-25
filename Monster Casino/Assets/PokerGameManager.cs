@@ -381,6 +381,11 @@ public class PokerGameManager : MonoBehaviour
         LaunchTextbox("Dealer " + dealer.GetComponent<PokerPlayer>().playerName + " pays small blind of " + smallBlindPaid + ".", dealer.GetComponent<PokerPlayer>().human ? 0 : 1);
         dealer.GetComponent<PokerPlayer>().money -= smallBlindPaid;
         pot += smallBlindPaid;
+
+        if (dealer.GetComponent<PokerPlayer>().human)
+            playerStakeAmt = smallBlind;
+        else
+            opponentStakeAmt = smallBlind;
     }
 
     void NonDealerPaysBigBlind()
@@ -392,6 +397,12 @@ public class PokerGameManager : MonoBehaviour
         pot += bigBlindPaid;
         //blindDifference = bigBlind - smallBlind;
         blindDifference = bigBlindPaid - smallBlindPaid;
+
+        if (nonDealer.GetComponent<PokerPlayer>().human)
+            playerStakeAmt = bigBlind;
+        else
+            opponentStakeAmt = bigBlind;
+
         print("blind difference: " + blindDifference);
     }
 
@@ -451,6 +462,9 @@ public class PokerGameManager : MonoBehaviour
         dealerResponded = false;
 
         cardsRevealed = false;
+
+        playerStakeAmt = 0;
+        opponentStakeAmt = 0;
 
         if (turn < 5)
             turn++;
@@ -983,12 +997,14 @@ public class PokerGameManager : MonoBehaviour
         {
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " is all in!", 1);
             pot += opponent.GetComponent<PokerPlayer>().money;
+            opponentStakeAmt += opponent.GetComponent<PokerPlayer>().money;
             opponent.GetComponent<PokerPlayer>().money = 0;
         } else
         {
             LaunchTextbox(opponent.GetComponent<PokerPlayer>().playerName + " calls " + callAmt + ".", 1);
             opponent.GetComponent<PokerPlayer>().money -= callAmt;
             pot += callAmt;
+            opponentStakeAmt += callAmt;
         }
 
         
@@ -1067,8 +1083,8 @@ public class PokerGameManager : MonoBehaviour
         opponent.GetComponent<PokerPlayer>().money -= raiseAmt;
         pot += raiseAmt;
         callAmt = raiseAmt;
-        raiseAmt = 0;
         opponentStakeAmt = raiseAmt;
+        raiseAmt = 0;
 
         PlayerRespondsRaise();
         yield return "success";
