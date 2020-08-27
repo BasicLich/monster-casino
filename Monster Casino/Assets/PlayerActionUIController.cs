@@ -19,8 +19,10 @@ public class PlayerActionUIController : MonoBehaviour
 
     void ResetBetSlider()
     {
-        maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min(PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money, PokerGameManager.instance.player.GetComponent<PokerPlayer>().money);
-        minBetAmount = PokerGameManager.instance.callAmt; //responding ? PokerGameManager.instance.callAmt : 0;
+        bool responding = PokerGameManager.instance.player.GetComponent<PokerPlayer>().responding;
+
+        maxBetAmount = noRaise ? PokerGameManager.instance.callAmt : Mathf.Min((responding || PokerGameManager.instance.callAmt > 0) ? PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money + PokerGameManager.instance.callAmt - PokerGameManager.instance.blindDifference : PokerGameManager.instance.opponent.GetComponent<PokerPlayer>().money - PokerGameManager.instance.blindDifference, (responding || PokerGameManager.instance.callAmt > 0) ? PokerGameManager.instance.player.GetComponent<PokerPlayer>().money : PokerGameManager.instance.player.GetComponent<PokerPlayer>().money + PokerGameManager.instance.callAmt);
+        minBetAmount = Mathf.Min(PokerGameManager.instance.player.GetComponent<PokerPlayer>().money, PokerGameManager.instance.callAmt); //responding ? PokerGameManager.instance.callAmt : 0;
         maxBetAmount = Mathf.Max(maxBetAmount, minBetAmount);
         betSlider.value = minBetAmount;
     }

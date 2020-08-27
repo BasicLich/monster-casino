@@ -10843,6 +10843,10 @@ PrefabInstance:
       propertyPath: m_audioClip
       value: 
       objectReference: {fileID: 8300000, guid: ffbaeed687841b14e85c2c8e21f952ea, type: 3}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8771205225161973605, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -18729,7 +18733,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1687288832}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &447362001
 Camera:
@@ -27449,7 +27453,7 @@ Transform:
   - {fileID: 2141651126}
   - {fileID: 1329497130}
   m_Father: {fileID: 1687288832}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &695871123
 MonoBehaviour:
@@ -41878,7 +41882,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 18e1413645f2dc14daa1ee9d753414e2, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.75
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -48278,6 +48282,10 @@ PrefabInstance:
       propertyPath: m_audioClip
       value: 
       objectReference: {fileID: 8300000, guid: 2c9b1189f2d04b84db9f87d6b81cd231, type: 3}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8771205225161973605, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -49405,7 +49413,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 1b823f6ad56592545b1d951bfc3d053a, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.75
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -49501,7 +49509,7 @@ Transform:
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 1687288832}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1154776898
 PrefabInstance:
@@ -50750,6 +50758,10 @@ PrefabInstance:
       propertyPath: m_audioClip
       value: 
       objectReference: {fileID: 8300000, guid: 6210ab2a6803e084f8e29117bcaef41f, type: 3}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8771205225161973605, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -67167,12 +67179,12 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 983153421}
-  - {fileID: 1296874201}
   - {fileID: 447362000}
+  - {fileID: 1296874201}
   - {fileID: 882418136}
-  - {fileID: 1485343037}
   - {fileID: 1154410040}
   - {fileID: 695871122}
+  - {fileID: 1485343037}
   m_Father: {fileID: 0}
   m_RootOrder: 105
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -92305,6 +92317,10 @@ PrefabInstance:
       propertyPath: m_audioClip
       value: 
       objectReference: {fileID: 8300000, guid: 459197812c2a25c46bc812e99c14d691, type: 3}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8771205226250649270, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: neverFolds
       value: 1
@@ -94521,6 +94537,10 @@ PrefabInstance:
       propertyPath: m_audioClip
       value: 
       objectReference: {fileID: 8300000, guid: 99605618ea703994d802be0cd82f5985, type: 3}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8771205225161973605, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -110890,7 +110910,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 18e1413645f2dc14daa1ee9d753414e2, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.75
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -116234,6 +116254,10 @@ PrefabInstance:
     - target: {fileID: 2034173968650214076, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: textText
       value: Don't act tough. Perish you coward!
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771205225156113813, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
+      propertyPath: m_Volume
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 8771205226250649270, guid: 5bf0bbac491445d418eceb383f3edfe9, type: 3}
       propertyPath: neverFolds
