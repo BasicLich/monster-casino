@@ -267,7 +267,7 @@ public class Hand
 			score = 1000;
 			Value v = Cards.GroupBy(h => h.Value)
 					   .Where(g => g.Count() == 2).First().Key;
-			score += GetValueScore(v) & 20;
+			score += GetValueScore(v) * 20;
 			score += Cards.Max(c => GetValueScore(c.Value));
 
 
