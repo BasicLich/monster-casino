@@ -5,12 +5,11 @@ Monster Casino is a "gambling RPG" video game made in Unity. Created for [Miz Ja
 ### Installing
 
 * Install Unity 2020.1.2f1
-* WebGL will not work until SnapCall is replaced or heavily modified
 
 ## Built With
 
 * [Unity3d](https://unity3d.com/get-unity/download) - Unity for game engine
-* [SnapCall](https://github.com/billymonks/SnapCall) - Snapcall for Poker hand evaluation tables
+* ~~[SnapCall](https://github.com/billymonks/SnapCall) - Snapcall for Poker hand evaluation tables~~ Thank you for your service.
 
 ## Credits
 
