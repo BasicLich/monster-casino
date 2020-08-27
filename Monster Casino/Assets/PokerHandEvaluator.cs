@@ -209,14 +209,36 @@ public class Hand
 		else if (IsFullHouse)
 		{
 			score = 6000;
-			Value v = Cards.GroupBy(h => h.Value)
-						.Where(g => g.Count() == 3)
-						.First().Key;
-			score += GetValueScore(v) * 20;
 
-			var orderedPairs = Cards.GroupBy(h => h.Value).Where(g => g.Count() == 2).OrderBy(c => GetValueScore(c.Key)).ToArray();
+			if (Cards.GroupBy(h => h.Value)
+						.Where(g => g.Count() == 3).Count() == 1)
+			{
+				Value v = Cards.GroupBy(h => h.Value)
+							.Where(g => g.Count() == 3)
+							.First().Key;
+				score += GetValueScore(v) * 20;
 
-			score += GetValueScore(orderedPairs.Last().Key);
+				var orderedPairs = Cards.GroupBy(h => h.Value).Where(g => g.Count() == 2).OrderBy(c => GetValueScore(c.Key)).ToArray();
+
+				score += GetValueScore(orderedPairs.Last().Key);
+			} else
+            {
+				var orderedTriples = Cards.GroupBy(h => h.Value)
+							.Where(g => g.Count() == 3).OrderBy(c => GetValueScore(c.Key));
+
+				/*Value v = Cards.GroupBy(h => h.Value)
+							.Where(g => g.Count() == 3)
+							.First().Key;
+				score += GetValueScore(v);
+
+				Value v2 = Cards.GroupBy(h => h.Value)
+							.Where(g => g.Count() == 3)
+							.Last().Key;
+				score += GetValueScore(v2) * 20;*/
+
+				score += GetValueScore(orderedTriples.Last().Key) * 20;
+				score += GetValueScore(orderedTriples.First().Key) * 1;
+			}
 
 			//score += Cards.GroupBy(h => h.Value).Where(g => g.Count() == 2).Max(c => GetValueScore(c.Key));
 		}
@@ -238,10 +260,14 @@ public class Hand
 			Value v = Cards.GroupBy(h => h.Value)
 						.Where(g => g.Count() == 3)
 						.First().Key;
-			score += GetValueScore(v) * 20;
-			score += Cards.GroupBy(h => h.Value)
-					   .Where(g => g.Count() != 3).Max(c => GetValueScore(c.Key));
-			//score += Cards.Max(c => GetValueScore(c.Value));
+			//score += GetValueScore(v) * 20;
+			//score += Cards.GroupBy(h => h.Value)
+					   //.Where(g => g.Count() != 3).Max(c => GetValueScore(c.Key));
+
+			var orderedCards = Cards.GroupBy(h => h.Value).Where(g => g.Count() == 1).OrderBy(c => GetValueScore(c.Key)).ToArray();
+			score += GetValueScore(v) * 50;
+			score += GetValueScore(orderedCards[orderedCards.Count() - 1].Key);
+			score += GetValueScore(orderedCards[orderedCards.Count() - 2].Key);
 		}
 		else if (IsTwoPair)
 		{
@@ -250,6 +276,9 @@ public class Hand
 
 			score += GetValueScore(orderedPairs.Last().Key) * 20;
 			score += GetValueScore(orderedPairs[orderedPairs.Length-2].Key) * 20;
+
+			var orderedCards = Cards.GroupBy(h => h.Value).Where(g => g.Count() == 1).OrderBy(c => GetValueScore(c.Key)).ToArray();
+			score += GetValueScore(orderedCards[orderedCards.Count() - 1].Key);
 			/*Value v = Cards.GroupBy(h => h.Value)
 					   .Where(g => g.Count() == 2).First().Key;
 			score += GetValueScore(v) * 20;
@@ -267,8 +296,12 @@ public class Hand
 			score = 1000;
 			Value v = Cards.GroupBy(h => h.Value)
 					   .Where(g => g.Count() == 2).First().Key;
-			score += GetValueScore(v) * 20;
-			score += Cards.Max(c => GetValueScore(c.Value));
+
+			var orderedCards = Cards.GroupBy(h => h.Value).Where(g => g.Count() == 1).OrderBy(c => GetValueScore(c.Key)).ToArray();
+			score += GetValueScore(v) * 50;
+			score += GetValueScore(orderedCards[orderedCards.Count() - 1].Key);
+			score += GetValueScore(orderedCards[orderedCards.Count() - 2].Key);
+			score += GetValueScore(orderedCards[orderedCards.Count() - 3].Key);
 
 
 		} else
@@ -384,6 +417,12 @@ public class Hand
 	{
 		get
 		{
+			if(Cards.GroupBy(h => h.Value)
+						.Where(g => g.Count() == 3).Count() >= 2)
+            {
+				return true;
+            }
+
 			return (IsPair || IsTwoPair) && IsThreeOfAKind;
 		}
 	}

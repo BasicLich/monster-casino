@@ -1300,12 +1300,12 @@ public class PokerGameManager : MonoBehaviour
             Hand testHand = new Hand();
             testHand.Cards = new GameCard[] {
                     new GameCard("c", "2"),
+                    new GameCard("d", "2"),
+                    new GameCard("h", "2"),
+                    new GameCard("s", "3"),
                     new GameCard("c", "3"),
-                    new GameCard("c", "4"),
-                    new GameCard("c", "5"),
-                    new GameCard("c", "6"),
-                    new GameCard("c", "7"),
-                    new GameCard("c", "8"),
+                    new GameCard("d", "3"),
+                    new GameCard("h", "8"),
                 };
 
             int testScore = testHand.GetHandScore();
@@ -1318,13 +1318,13 @@ public class PokerGameManager : MonoBehaviour
         {
             Hand testHand = new Hand();
             testHand.Cards = new GameCard[] {
+                    new GameCard("c", "2"),
+                    new GameCard("d", "2"),
+                    new GameCard("h", "2"),
+                    new GameCard("s", "3"),
                     new GameCard("c", "3"),
-                    new GameCard("c", "4"),
-                    new GameCard("c", "5"),
-                    new GameCard("c", "6"),
-                    new GameCard("c", "7"),
-                    new GameCard("c", "8"),
-                    new GameCard("c", "9"),
+                    new GameCard("d", "3"),
+                    new GameCard("h", "9"),
                 };
 
             int testScore = testHand.GetHandScore();
@@ -1337,13 +1337,13 @@ public class PokerGameManager : MonoBehaviour
         {
             Hand testHand = new Hand();
             testHand.Cards = new GameCard[] {
+                    new GameCard("c", "2"),
+                    new GameCard("d", "2"),
+                    new GameCard("h", "2"),
+                    new GameCard("s", "3"),
                     new GameCard("c", "3"),
-                    new GameCard("c", "4"),
-                    new GameCard("c", "5"),
-                    new GameCard("h", "6"),
-                    new GameCard("c", "7"),
-                    new GameCard("c", "8"),
-                    new GameCard("c", "9"),
+                    new GameCard("d", "4"),
+                    new GameCard("h", "9"),
                 };
 
             int testScore = testHand.GetHandScore();
@@ -1356,12 +1356,12 @@ public class PokerGameManager : MonoBehaviour
         {
             Hand testHand = new Hand();
             testHand.Cards = new GameCard[] {
+                    new GameCard("c", "2"),
+                    new GameCard("d", "2"),
+                    new GameCard("h", "4"),
+                    new GameCard("s", "3"),
                     new GameCard("c", "3"),
-                    new GameCard("c", "4"),
-                    new GameCard("c", "5"),
-                    new GameCard("h", "6"),
-                    new GameCard("h", "7"),
-                    new GameCard("h", "8"),
+                    new GameCard("d", "3"),
                     new GameCard("h", "9"),
                 };
 
@@ -1509,6 +1509,41 @@ public class PokerGameManager : MonoBehaviour
                 };
 
             int testScore = testHand.GetHandScore();
+
+            print("test got " + testHand.GetHandName());
+            print("test score: " + testScore);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            Hand testHand = new Hand();
+            testHand.Cards = new GameCard[] {
+                    new GameCard("h", "8"),
+                    new GameCard("c", "Q"),
+                    new GameCard("h", "9"),
+                    new GameCard("h", "K"),
+                    new GameCard("h", "6"),
+                    new GameCard("c", "Q"),
+                    new GameCard("d", "10"),
+                };
+
+            int testScore = testHand.GetHandScore();
+
+            print("test got " + testHand.GetHandName());
+            print("test score: " + testScore);
+
+            testHand = new Hand();
+            testHand.Cards = new GameCard[] {
+                    new GameCard("h", "8"),
+                    new GameCard("c", "Q"),
+                    new GameCard("h", "9"),
+                    new GameCard("h", "K"),
+                    new GameCard("h", "6"),
+                    new GameCard("c", "Q"),
+                    new GameCard("d", "7"),
+                };
+
+            testScore = testHand.GetHandScore();
 
             print("test got " + testHand.GetHandName());
             print("test score: " + testScore);
