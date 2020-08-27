@@ -429,7 +429,7 @@ public class Hand
 				}
 				for (var i = 2; i < ordered.Length; i++)
 				{
-					if ((int)ordered[i].Value != straightStart2 + i)
+					if ((int)ordered[i].Value != straightStart2 + i - 1)
 						hand2 = false;
 				}
 
@@ -449,9 +449,9 @@ public class Hand
 				bool hand1 = true;
 				bool hand2 = true;
 				bool hand3 = true;
-				var straightStart = (int)ordered.First().Value;
-				var straightStart2 = (int)ordered.ToArray<GameCard>()[1].Value;
-				var straightStart3 = (int)ordered.ToArray<GameCard>()[2].Value;
+				var straightStart = (int)ordered[0].Value;
+				var straightStart2 = (int)ordered[1].Value;
+				var straightStart3 = (int)ordered[2].Value;
 				for (var i = 1; i < ordered.Length - 2; i++)
 				{
 					if ((int)ordered[i].Value != straightStart + i)
@@ -459,12 +459,12 @@ public class Hand
 				}
 				for (var i = 2; i < ordered.Length - 1; i++)
 				{
-					if ((int)ordered[i].Value != straightStart2 + i)
+					if ((int)ordered[i].Value != straightStart2 + i - 1)
 						hand2 = false;
 				}
 				for (var i = 3; i < ordered.Length; i++)
 				{
-					if ((int)ordered[i].Value != straightStart3 + i)
+					if ((int)ordered[i].Value != straightStart3 + i - 2)
 						hand3 = false;
 				}
 
@@ -555,7 +555,7 @@ public class Hand
 				}
 				for (var i = 2; i < ordered.Length; i++)
 				{
-					if ((int)ordered[i].Value != straightStart2 + i)
+					if ((int)ordered[i].Value != straightStart2 + i - 1)
 						hand2 = false;
 
 					if (ordered[i].Suit != flushStart2)
@@ -595,7 +595,7 @@ public class Hand
 				}
 				for (var i = 2; i < ordered.Length - 1; i++)
 				{
-					if ((int)ordered[i].Value != straightStart2 + i)
+					if ((int)ordered[i].Value != straightStart2 + i - 1)
 						hand2 = false;
 
 					if (ordered[i].Suit != flushStart2)
@@ -603,7 +603,7 @@ public class Hand
 				}
 				for (var i = 3; i < ordered.Length; i++)
 				{
-					if ((int)ordered[i].Value != straightStart3 + i)
+					if ((int)ordered[i].Value != straightStart3 + i - 2)
 						hand3 = false;
 
 					if (ordered[i].Suit != flushStart3)

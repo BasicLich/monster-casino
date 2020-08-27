@@ -1479,6 +1479,41 @@ public class PokerGameManager : MonoBehaviour
             print("test score: " + testScore);
         }
 
+        if (Input.GetKeyDown(KeyCode.Alpha9))
+        {
+            Hand testHand = new Hand();
+            testHand.Cards = new GameCard[] {
+                    new GameCard("h", "Q"),
+                    new GameCard("c", "K"),
+                    new GameCard("h", "J"),
+                    new GameCard("h", "10"),
+                    new GameCard("h", "8"),
+                    new GameCard("c", "4"),
+                    new GameCard("d", "6"),
+                };
+
+            //int testScore = testHand.GetHandScore();
+
+            //print("test got " + testHand.GetHandName());
+            //print("test score: " + testScore);
+
+            testHand = new Hand();
+            testHand.Cards = new GameCard[] {
+                    new GameCard("d", "7"),
+                    new GameCard("h", "10"),
+                    new GameCard("s", "2"),
+                    new GameCard("h", "8"),
+                    new GameCard("h", "5"),
+                    new GameCard("d", "3"),
+                    new GameCard("h", "6"),
+                };
+
+            int testScore = testHand.GetHandScore();
+
+            print("test got " + testHand.GetHandName());
+            print("test score: " + testScore);
+        }
+
     }
 
     public void UsePartyAbility(int index)
